@@ -25,28 +25,153 @@
   <link rel="manifest" href="manifest.json">
   
   <style>
-    /* Force landscape orientation warning */
+    /* Mobile rotation overlay */
+    #rotation-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #0a0e27;
+      z-index: 999999;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      text-align: center;
+    }
+    
     @media screen and (orientation: portrait) {
-      body::before {
-        content: '⟲ Please rotate your device to landscape mode';
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: #0a0e27;
-        color: #00f0ff;
+      #rotation-overlay {
         display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 24px;
-        font-family: 'Courier New', monospace;
-        text-align: center;
-        z-index: 999999;
-        padding: 20px;
       }
       #game-container {
         display: none;
+      }
+    }
+    
+    #rotation-overlay h1 {
+      color: #00f0ff;
+      font-size: clamp(24px, 6vw, 48px);
+      font-family: 'Courier New', monospace;
+      margin: 0 0 20px 0;
+      text-shadow: 0 0 20px #00f0ff;
+    }
+    
+    #rotation-overlay p {
+      color: #ffffff;
+      font-size: clamp(16px, 4vw, 24px);
+      font-family: 'Courier New', monospace;
+      margin: 0 0 30px 0;
+      line-height: 1.6;
+    }
+    
+    #rotation-overlay .rotate-icon {
+      font-size: clamp(48px, 15vw, 96px);
+      color: #00f0ff;
+      animation: rotate-pulse 2s ease-in-out infinite;
+      margin: 20px 0;
+    }
+    
+    @keyframes rotate-pulse {
+      0%, 100% { transform: rotate(0deg) scale(1); }
+      50% { transform: rotate(90deg) scale(1.1); }
+    }
+    
+    #rotation-overlay .fullscreen-btn {
+      background: linear-gradient(135deg, #00f0ff, #00a8b5);
+      border: none;
+      color: #000000;
+      font-size: clamp(16px, 4vw, 20px);
+      font-weight: bold;
+      font-family: 'Courier New', monospace;
+      padding: 15px 40px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 10px;
+      box-shadow: 0 4px 15px rgba(0, 240, 255, 0.4);
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+    }
+    
+    #rotation-overlay .fullscreen-btn:hover {
+      background: linear-gradient(135deg, #00ffff, #00d4e0);
+      box-shadow: 0 6px 20px rgba(0, 240, 255, 0.6);
+      transform: translateY(-2px);
+    }
+    
+    #rotation-overlay .fullscreen-btn:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 10px rgba(0, 240, 255, 0.4);
+    }
+    
+    #rotation-overlay .skip-btn {
+      background: transparent;
+      border: 2px solid #666666;
+      color: #999999;
+      font-size: clamp(14px, 3vw, 16px);
+      font-family: 'Courier New', monospace;
+      padding: 10px 30px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 10px;
+      transition: all 0.3s ease;
+    }
+    
+    #rotation-overlay .skip-btn:hover {
+      border-color: #00f0ff;
+      color: #00f0ff;
+    }
+    
+    /* Fullscreen adjustments - hide ALL browser UI */
+    body:fullscreen,
+    body:-webkit-full-screen,
+    body:-moz-full-screen,
+    body:-ms-fullscreen {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    
+    #game-container:fullscreen,
+    #game-container:-webkit-full-screen,
+    #game-container:-moz-full-screen,
+    #game-container:-ms-fullscreen,
+    body:fullscreen #game-container,
+    body:-webkit-full-screen #game-container {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0a0e27;
+      z-index: 99999;
+    }
+    
+    /* Prevent scrolling in fullscreen */
+    body:fullscreen,
+    html:fullscreen {
+      overflow: hidden !important;
+      position: fixed !important;
+      width: 100% !important;
+      height: 100% !important;
+    }
+    
+    /* iOS Safari fullscreen fixes */
+    @supports (-webkit-overflow-scrolling: touch) {
+      body {
+        -webkit-overflow-scrolling: none;
+      }
+      #game-container {
+        -webkit-overflow-scrolling: none;
       }
     }
   </style>
@@ -118,6 +243,19 @@
   </style>
 </head>
 <body>
+  <!-- Mobile Rotation Overlay -->
+  <div id="rotation-overlay">
+    <h1>🎮 DATAHEIST</h1>
+    <div class="rotate-icon">⟲</div>
+    <p>Please rotate your device to<br>landscape mode for best experience</p>
+    <button class="fullscreen-btn" id="fullscreen-btn" onclick="enterFullscreenAndPlay()">
+      📱 ENTER FULLSCREEN & PLAY
+    </button>
+    <button class="skip-btn" onclick="skipRotationWarning()">
+      Continue in Portrait (Not Recommended)
+    </button>
+  </div>
+
   <script>
     console.log('[index.html] ========================================');
     console.log('[index.html] HTML DOCUMENT LOADING');
@@ -523,6 +661,265 @@
     console.log('[index.html] ========================================');
     console.log('[index.html] HTML DOCUMENT PARSING COMPLETE');
     console.log('[index.html] ========================================');
+  </script>
+
+  <script>
+    // Mobile fullscreen and orientation handling
+    console.log('[index.html] Mobile fullscreen script loaded');
+    
+    /**
+     * Enter fullscreen mode and hide all browser UI
+     */
+    window.enterFullscreenAndPlay = async function() {
+      console.log('[index.html] enterFullscreenAndPlay: Entering TRUE fullscreen mode...');
+      
+      const gameContainer = document.getElementById('game-container');
+      const rotationOverlay = document.getElementById('rotation-overlay');
+      const body = document.body;
+      const html = document.documentElement;
+      
+      if (!gameContainer) {
+        console.error('[index.html] Game container not found');
+        return;
+      }
+      
+      try {
+        // Step 1: Hide address bar by scrolling (mobile trick)
+        window.scrollTo(0, 1);
+        setTimeout(() => window.scrollTo(0, 0), 0);
+        
+        // Step 2: Set viewport height to actual viewport (ignore browser chrome)
+        const setViewportHeight = () => {
+          const vh = window.innerHeight * 0.01;
+          document.documentElement.style.setProperty('--vh', `${vh}px`);
+          gameContainer.style.height = `${window.innerHeight}px`;
+          gameContainer.style.width = `${window.innerWidth}px`;
+        };
+        setViewportHeight();
+        
+        // Update on resize/orientation change
+        window.addEventListener('resize', setViewportHeight);
+        window.addEventListener('orientationchange', () => {
+          setTimeout(setViewportHeight, 100);
+        });
+        
+        // Step 3: Request fullscreen API (hides ALL browser UI)
+        let fullscreenSuccess = false;
+        
+        // Try document.body first (most compatible)
+        if (body.requestFullscreen) {
+          await body.requestFullscreen({ navigationUI: "hide" });
+          fullscreenSuccess = true;
+        } else if (body.webkitRequestFullscreen) {
+          await body.webkitRequestFullscreen(); // Safari iOS
+          fullscreenSuccess = true;
+        } else if (body.mozRequestFullScreen) {
+          await body.mozRequestFullScreen(); // Firefox
+          fullscreenSuccess = true;
+        } else if (body.msRequestFullscreen) {
+          await body.msRequestFullscreen(); // IE11
+          fullscreenSuccess = true;
+        }
+        
+        // Fallback: try on game-container
+        if (!fullscreenSuccess) {
+          if (gameContainer.requestFullscreen) {
+            await gameContainer.requestFullscreen({ navigationUI: "hide" });
+            fullscreenSuccess = true;
+          } else if (gameContainer.webkitRequestFullscreen) {
+            await gameContainer.webkitRequestFullscreen();
+            fullscreenSuccess = true;
+          }
+        }
+        
+        if (fullscreenSuccess) {
+          console.log('[index.html] ✅ Fullscreen API activated - browser UI hidden');
+        } else {
+          console.warn('[index.html] ⚠️ Fullscreen API not available, using fallback');
+        }
+        
+        // Step 4: Lock screen orientation to landscape
+        if (screen.orientation && screen.orientation.lock) {
+          try {
+            await screen.orientation.lock('landscape-primary');
+            console.log('[index.html] ✅ Screen locked to landscape-primary');
+          } catch (orientError) {
+            // Try alternative landscape lock
+            try {
+              await screen.orientation.lock('landscape');
+              console.log('[index.html] ✅ Screen locked to landscape');
+            } catch (orientError2) {
+              console.warn('[index.html] ⚠️ Screen orientation lock not supported');
+            }
+          }
+        }
+        
+        // Step 5: Prevent scrolling and bouncing (iOS fix)
+        body.style.overflow = 'hidden';
+        body.style.position = 'fixed';
+        body.style.width = '100%';
+        body.style.height = '100%';
+        html.style.overflow = 'hidden';
+        
+        // Prevent pull-to-refresh
+        body.style.overscrollBehavior = 'none';
+        
+        // Prevent zoom
+        const viewport = document.querySelector('meta[name="viewport"]');
+        if (viewport) {
+          viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
+        }
+        
+        // Step 6: Hide rotation overlay
+        if (rotationOverlay) {
+          rotationOverlay.style.display = 'none';
+        }
+        
+        // Step 7: Force game container to fill screen
+        gameContainer.style.position = 'fixed';
+        gameContainer.style.top = '0';
+        gameContainer.style.left = '0';
+        gameContainer.style.width = '100vw';
+        gameContainer.style.height = '100vh';
+        gameContainer.style.zIndex = '9999';
+        
+        console.log('[index.html] ✅ TRUE FULLSCREEN MODE ACTIVE');
+        console.log('[index.html] Viewport:', {
+          width: window.innerWidth,
+          height: window.innerHeight,
+          availWidth: screen.availWidth,
+          availHeight: screen.availHeight
+        });
+        
+      } catch (error) {
+        console.error('[index.html] ❌ Fullscreen request failed:', error);
+        console.error('[index.html] Error name:', error.name);
+        console.error('[index.html] Error message:', error.message);
+        
+        // Ultimate fallback: just maximize without fullscreen API
+        body.style.overflow = 'hidden';
+        body.style.position = 'fixed';
+        body.style.width = '100%';
+        body.style.height = '100%';
+        gameContainer.style.position = 'fixed';
+        gameContainer.style.top = '0';
+        gameContainer.style.left = '0';
+        gameContainer.style.width = '100vw';
+        gameContainer.style.height = '100vh';
+        
+        if (rotationOverlay) {
+          rotationOverlay.style.display = 'none';
+        }
+        
+        console.log('[index.html] ⚠️ Using fallback fullscreen mode');
+      }
+    };
+    
+    /**
+     * Skip rotation warning (not recommended)
+     */
+    window.skipRotationWarning = function() {
+      console.log('[index.html] skipRotationWarning: User chose to skip rotation warning');
+      
+      const rotationOverlay = document.getElementById('rotation-overlay');
+      const gameContainer = document.getElementById('game-container');
+      const body = document.body;
+      
+      if (rotationOverlay) {
+        rotationOverlay.style.display = 'none';
+      }
+      
+      if (gameContainer) {
+        gameContainer.style.display = 'block';
+      }
+      
+      // Still apply some mobile optimizations
+      body.style.overflow = 'hidden';
+      window.scrollTo(0, 1);
+    };
+    
+    // Handle fullscreen exit gracefully
+    document.addEventListener('fullscreenchange', () => {
+      if (!document.fullscreenElement) {
+        console.log('[index.html] ⚠️ Exited fullscreen mode');
+        
+        // Unlock screen orientation
+        if (screen.orientation && screen.orientation.unlock) {
+          screen.orientation.unlock();
+        }
+        
+        // Show exit message
+        if (confirm('You exited fullscreen mode. Return to fullscreen?')) {
+          enterFullscreenAndPlay();
+        }
+      }
+    });
+    
+    // Webkit fullscreen change (Safari)
+    document.addEventListener('webkitfullscreenchange', () => {
+      if (!document.webkitFullscreenElement) {
+        console.log('[index.html] ⚠️ Exited webkit fullscreen mode');
+      }
+    });
+    
+    // Prevent accidental exit gestures on mobile
+    let lastTouchY = 0;
+    document.addEventListener('touchstart', (e) => {
+      lastTouchY = e.touches[0].clientY;
+    }, { passive: false });
+    
+    document.addEventListener('touchmove', (e) => {
+      const touchY = e.touches[0].clientY;
+      const touchYDelta = touchY - lastTouchY;
+      
+      // Prevent pull-down-to-refresh
+      if (touchYDelta > 0 && window.scrollY === 0) {
+        e.preventDefault();
+      }
+      
+      lastTouchY = touchY;
+    }, { passive: false });
+    
+    console.log('[index.html] ✅ Enhanced mobile fullscreen functions initialized');
+  </script>
+    
+    /**
+     * Skip rotation warning (not recommended)
+     */
+    window.skipRotationWarning = function() {
+      console.log('[index.html] skipRotationWarning: User chose to skip rotation warning');
+      
+      const rotationOverlay = document.getElementById('rotation-overlay');
+      if (rotationOverlay) {
+        rotationOverlay.style.display = 'none';
+      }
+      
+      const gameContainer = document.getElementById('game-container');
+      if (gameContainer) {
+        gameContainer.style.display = 'block';
+      }
+    };
+    
+    // Handle fullscreen exit
+    document.addEventListener('fullscreenchange', () => {
+      if (!document.fullscreenElement) {
+        console.log('[index.html] Exited fullscreen mode');
+        
+        // Unlock screen orientation
+        if (screen.orientation && screen.orientation.unlock) {
+          screen.orientation.unlock();
+        }
+      }
+    });
+    
+    // Webkit fullscreen change
+    document.addEventListener('webkitfullscreenchange', () => {
+      if (!document.webkitFullscreenElement) {
+        console.log('[index.html] Exited webkit fullscreen mode');
+      }
+    });
+    
+    console.log('[index.html] ✅ Mobile fullscreen functions initialized');
   </script>
 
   <noscript>
