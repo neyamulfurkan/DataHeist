@@ -19,12 +19,52 @@
   
   <title>DataHeist - Cyberpunk Hacking Roguelike</title>
   
+  <style>
+    /* CRITICAL: Base layout styles loaded first */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      position: fixed;
+    }
+    
+    #game-container {
+      width: 100vw;
+      height: 100vh;
+      display: block;
+      position: fixed;
+      top: 0;
+      left: 0;
+      background: #0a0e27;
+    }
+  </style>
+  
   <link rel="stylesheet" href="styles/game.css">
   <link rel="icon" type="image/png" href="assets/favicon.png">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
   <link rel="manifest" href="manifest.json">
   
   <style>
+    /* Desktop: Ensure game container is always visible and full-screen */
+    @media screen and (min-width: 769px) {
+      #rotation-overlay {
+        display: none !important;
+      }
+      #game-container {
+        display: block !important;
+        width: 100vw;
+        height: 100vh;
+        position: fixed;
+        top: 0;
+        left: 0;
+      }
+    }
     /* Mobile rotation overlay */
     #rotation-overlay {
       display: none;
@@ -42,7 +82,7 @@
       text-align: center;
     }
     
-    @media screen and (orientation: portrait) {
+    @media screen and (orientation: portrait) and (max-width: 768px) {
       #rotation-overlay {
         display: flex;
       }
@@ -881,45 +921,6 @@
     }, { passive: false });
     
     console.log('[index.html] ✅ Enhanced mobile fullscreen functions initialized');
-  </script>
-    
-    /**
-     * Skip rotation warning (not recommended)
-     */
-    window.skipRotationWarning = function() {
-      console.log('[index.html] skipRotationWarning: User chose to skip rotation warning');
-      
-      const rotationOverlay = document.getElementById('rotation-overlay');
-      if (rotationOverlay) {
-        rotationOverlay.style.display = 'none';
-      }
-      
-      const gameContainer = document.getElementById('game-container');
-      if (gameContainer) {
-        gameContainer.style.display = 'block';
-      }
-    };
-    
-    // Handle fullscreen exit
-    document.addEventListener('fullscreenchange', () => {
-      if (!document.fullscreenElement) {
-        console.log('[index.html] Exited fullscreen mode');
-        
-        // Unlock screen orientation
-        if (screen.orientation && screen.orientation.unlock) {
-          screen.orientation.unlock();
-        }
-      }
-    });
-    
-    // Webkit fullscreen change
-    document.addEventListener('webkitfullscreenchange', () => {
-      if (!document.webkitFullscreenElement) {
-        console.log('[index.html] Exited webkit fullscreen mode');
-      }
-    });
-    
-    console.log('[index.html] ✅ Mobile fullscreen functions initialized');
   </script>
 
   <noscript>
