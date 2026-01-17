@@ -1273,66 +1273,144 @@ export default class MenuScene extends Phaser.Scene {
    * Setup PWA install button
    * Shows button only when app can be installed
    */
-  setupPWAInstallButton(centerX, centerY) {
-    console.log('[MenuScene] setupPWAInstallButton: Initializing PWA install button...');
+setupPWAInstallButton(centerX, centerY) {
+  console.log('[MenuScene] setupPWAInstallButton: Initializing PWA install button...');
+  
+  let deferredPrompt = null;
+  let installButton = null;
+  
+  // Check if already installed
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
+                       window.matchMedia('(display-mode: fullscreen)').matches ||
+                       window.navigator.standalone === true;
+  
+  if (isStandalone) {
+    console.log('[MenuScene] setupPWAInstallButton: App is already installed as PWA');
+    return;
+  }
+  
+  // Detect device type
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const isAndroid = /Android/.test(navigator.userAgent);
+  const isMobile = isIOS || isAndroid || /Mobile/.test(navigator.userAgent);
+  
+  console.log('[MenuScene] setupPWAInstallButton: Device detection:', {
+    isIOS,
+    isAndroid,
+    isMobile,
+    userAgent: navigator.userAgent
+  });
+  
+  // For iOS - always show manual install button (no beforeinstallprompt)
+  if (isIOS) {
+    console.log('[MenuScene] setupPWAInstallButton: iOS detected - showing manual install button');
     
-    let deferredPrompt = null;
-    let installButton = null;
+    installButton = this.createButton(
+      centerX,
+      centerY,
+      '📱 ADD TO HOME',
+      () => {
+        audioManager.playSound('sfx_ui_click', 0.5);
+        this.showIOSInstallInstructions();
+      },
+      true
+    );
     
-    // Check if already installed
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-      console.log('[MenuScene] setupPWAInstallButton: App is already installed as PWA');
-      return;
+    // Animate in
+    if (installButton && installButton.container) {
+      installButton.container.setAlpha(0);
+      this.tweens.add({
+        targets: installButton.container,
+        alpha: 1,
+        duration: 300,
+        delay: 600,
+        ease: 'Power2'
+      });
     }
     
-    if (window.matchMedia('(display-mode: fullscreen)').matches) {
-      console.log('[MenuScene] setupPWAInstallButton: App is running in fullscreen mode');
-      return;
-    }
+    console.log('[MenuScene] setupPWAInstallButton: iOS install button created');
+    return;
+  }
+  
+  // For Android/Desktop - wait for beforeinstallprompt
+  let promptReceived = false;
+  
+  window.addEventListener('beforeinstallprompt', (e) => {
+    console.log('[MenuScene] setupPWAInstallButton: 📱 PWA install prompt available');
+    e.preventDefault();
+    deferredPrompt = e;
+    promptReceived = true;
     
-    // Listen for install prompt
-    window.addEventListener('beforeinstallprompt', (e) => {
-      console.log('[MenuScene] setupPWAInstallButton: 📱 PWA install prompt available');
-      e.preventDefault();
-      deferredPrompt = e;
+    // Create install button if not already shown
+    if (!installButton) {
+      installButton = this.createButton(
+        centerX,
+        centerY,
+        '📱 INSTALL APP',
+        () => {
+          if (deferredPrompt) {
+            console.log('[MenuScene] setupPWAInstallButton: User clicked install button');
+            audioManager.playSound('sfx_ui_click', 0.5);
+            
+            deferredPrompt.prompt();
+            
+            deferredPrompt.userChoice.then((choiceResult) => {
+              if (choiceResult.outcome === 'accepted') {
+                console.log('[MenuScene] setupPWAInstallButton: ✅ User installed PWA!');
+                if (installButton && installButton.container) {
+                  // Animate out and destroy
+                  this.tweens.add({
+                    targets: installButton.container,
+                    alpha: 0,
+                    scale: 0.5,
+                    duration: 300,
+                    onComplete: () => {
+                      if (installButton && installButton.container) {
+                        installButton.container.destroy();
+                        installButton = null;
+                      }
+                    }
+                  });
+                }
+              } else {
+                console.log('[MenuScene] setupPWAInstallButton: ❌ User declined PWA install');
+              }
+              deferredPrompt = null;
+            });
+          }
+        },
+        true
+      );
       
-      // Create install button if not already shown
-      if (!installButton) {
+      // Animate in
+      if (installButton && installButton.container) {
+        installButton.container.setAlpha(0);
+        this.tweens.add({
+          targets: installButton.container,
+          alpha: 1,
+          duration: 300,
+          delay: 600,
+          ease: 'Power2'
+        });
+      }
+      
+      console.log('[MenuScene] setupPWAInstallButton: ✅ Install button created');
+    }
+  });
+  
+  // Fallback: If no prompt after 3 seconds on Android, show manual instructions
+  if (isAndroid) {
+    setTimeout(() => {
+      if (!promptReceived && !installButton) {
+        console.log('[MenuScene] setupPWAInstallButton: No prompt received, showing fallback button');
+        
         installButton = this.createButton(
           centerX,
           centerY,
           '📱 INSTALL APP',
           () => {
-            if (deferredPrompt) {
-              console.log('[MenuScene] setupPWAInstallButton: User clicked install button');
-              audioManager.playSound('sfx_ui_click', 0.5);
-              
-              deferredPrompt.prompt();
-              
-              deferredPrompt.userChoice.then((choiceResult) => {
-                if (choiceResult.outcome === 'accepted') {
-                  console.log('[MenuScene] setupPWAInstallButton: ✅ User installed PWA!');
-                  if (installButton && installButton.container) {
-                    // Animate out and destroy
-                    this.tweens.add({
-                      targets: installButton.container,
-                      alpha: 0,
-                      scale: 0.5,
-                      duration: 300,
-                      onComplete: () => {
-                        if (installButton && installButton.container) {
-                          installButton.container.destroy();
-                          installButton = null;
-                        }
-                      }
-                    });
-                  }
-                } else {
-                  console.log('[MenuScene] setupPWAInstallButton: ❌ User declined PWA install');
-                }
-                deferredPrompt = null;
-              });
-            }
+            audioManager.playSound('sfx_ui_click', 0.5);
+            this.showAndroidInstallInstructions();
           },
           true
         );
@@ -1348,46 +1426,12 @@ export default class MenuScene extends Phaser.Scene {
             ease: 'Power2'
           });
         }
-        
-        console.log('[MenuScene] setupPWAInstallButton: ✅ Install button created');
       }
-    });
-    
-    // For iOS Safari (no beforeinstallprompt event)
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    const isInStandaloneMode = ('standalone' in window.navigator) && window.navigator.standalone;
-    
-    if (isIOS && !isInStandaloneMode) {
-      console.log('[MenuScene] setupPWAInstallButton: iOS detected - showing manual install hint');
-      
-      // Show iOS install hint button
-      const iosHintButton = this.createButton(
-        centerX,
-        centerY,
-        '📱 INSTALL (iOS)',
-        () => {
-          audioManager.playSound('sfx_ui_click', 0.5);
-          this.showIOSInstallInstructions();
-        },
-        true
-      );
-      
-      // Animate in
-      if (iosHintButton && iosHintButton.container) {
-        iosHintButton.container.setAlpha(0);
-        this.tweens.add({
-          targets: iosHintButton.container,
-          alpha: 1,
-          duration: 300,
-          delay: 600,
-          ease: 'Power2'
-        });
-      }
-    }
-    
-    console.log('[MenuScene] setupPWAInstallButton: ✅ PWA install button setup complete');
+    }, 3000);
   }
-
+  
+  console.log('[MenuScene] setupPWAInstallButton: ✅ PWA install button setup complete');
+}
   /**
    * Show iOS installation instructions
    */
@@ -1481,6 +1525,101 @@ export default class MenuScene extends Phaser.Scene {
     
     console.log('[MenuScene] showIOSInstallInstructions: Instructions displayed');
   }
+
+  /**
+ * Show Android installation instructions
+ */
+showAndroidInstallInstructions() {
+  console.log('[MenuScene] showAndroidInstallInstructions: Showing Android instructions...');
+  
+  const centerX = this.cameras.main.width / 2;
+  const centerY = this.cameras.main.height / 2;
+  
+  // Overlay
+  const overlay = this.add.rectangle(0, 0, this.cameras.main.width, this.cameras.main.height, 0x000000, 0.8);
+  overlay.setOrigin(0);
+  overlay.setDepth(200);
+  overlay.setInteractive();
+  
+  // Panel container
+  const panel = this.add.container(centerX, centerY);
+  panel.setDepth(201);
+  
+  // Background
+  const panelBg = this.add.rectangle(0, 0, 500, 350, 0x0a0e27);
+  panelBg.setStrokeStyle(4, 0x00f0ff);
+  
+  // Title
+  const title = this.add.text(0, -140, 'INSTALL ON ANDROID', {
+    fontSize: '28px',
+    color: '#00f0ff',
+    fontFamily: GAME_CONFIG.UI.TEXT.FONT_FAMILY,
+    fontStyle: 'bold'
+  });
+  title.setOrigin(0.5);
+  
+  // Instructions
+  const instructions = [
+    '1. Tap the Menu button (⋮)',
+    '   in your browser',
+    '2. Look for "Add to Home',
+    '   screen" or "Install app"',
+    '3. Tap "Add" or "Install"',
+    '4. Open DataHeist from',
+    '   your home screen!'
+  ];
+  
+  let instructionY = -80;
+  instructions.forEach(line => {
+    const text = this.add.text(0, instructionY, line, {
+      fontSize: '16px',
+      color: '#ffffff',
+      fontFamily: GAME_CONFIG.UI.TEXT.FONT_FAMILY,
+      align: 'center'
+    });
+    text.setOrigin(0.5);
+    panel.add(text);
+    instructionY += 30;
+  });
+  
+  // Close button
+  const closeButton = this.createButton(0, 130, 'GOT IT', () => {
+    audioManager.playSound('sfx_ui_click', 0.5);
+    this.tweens.add({
+      targets: [overlay, panel],
+      alpha: 0,
+      duration: 200,
+      onComplete: () => {
+        overlay.destroy();
+        panel.destroy();
+      }
+    });
+  }, true);
+  
+  panel.add([panelBg, title]);
+  if (closeButton && closeButton.container) {
+    panel.add(closeButton.container);
+  }
+  
+  // Animate in
+  overlay.setAlpha(0);
+  panel.setScale(0.8);
+  
+  this.tweens.add({
+    targets: overlay,
+    alpha: 0.8,
+    duration: 200
+  });
+  
+  this.tweens.add({
+    targets: panel,
+    scale: 1,
+    duration: 200,
+    ease: 'Back.easeOut'
+  });
+  
+  console.log('[MenuScene] showAndroidInstallInstructions: Instructions displayed');
+}
 }
 
 console.log('[MenuScene] ✅ Module loaded successfully');
