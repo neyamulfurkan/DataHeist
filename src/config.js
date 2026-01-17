@@ -603,21 +603,21 @@ export const GAME_CONFIG = {
   // ============================================================================
   ASSETS: {
     // Base Paths
-    SPRITE_PATH: 'public/assets/sprites/',
-    AUDIO_PATH: 'public/assets/audio/',
-    FONT_PATH: 'public/assets/fonts/',
+    SPRITE_PATH: 'assets/sprites/',
+    AUDIO_PATH: 'assets/audio/',
+    FONT_PATH: 'assets/fonts/',
     
     // Sprite Folders
-    CARDS: 'public/assets/sprites/cards/',
-    RUNNERS: 'public/assets/sprites/runners/',
-    ICE: 'public/assets/sprites/enemies/',
-    UI: 'public/assets/sprites/ui/',
-    ICONS: 'public/assets/sprites/icons/',
-    EFFECTS: 'public/assets/sprites/effects/',
+    CARDS: 'assets/sprites/cards/',
+    RUNNERS: 'assets/sprites/runners/',
+    ICE: 'assets/sprites/enemies/',
+    UI: 'assets/sprites/ui/',
+    ICONS: 'assets/sprites/icons/',
+    EFFECTS: 'assets/sprites/effects/',
     
     // Audio Folders
-    MUSIC: 'public/assets/audio/music/',
-    SFX: 'public/assets/audio/sfx/',
+    MUSIC: 'assets/audio/music/',
+    SFX: 'assets/audio/sfx/',
     
     // Placeholder Assets (if real assets not available)
     USE_PLACEHOLDERS: false,
