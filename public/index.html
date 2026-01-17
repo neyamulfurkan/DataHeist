@@ -47,8 +47,11 @@
   
   <link rel="stylesheet" href="styles/game.css">
   <link rel="icon" type="image/png" href="assets/favicon.png">
-  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
-  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="/DataHeist/assets/sprites/logo.png">
+  <link rel="apple-touch-startup-image" href="/DataHeist/assets/sprites/logo.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-fullscreen">
+  <link rel="manifest" href="/DataHeist/manifest.json">
   
   <style>
     /* Desktop: Ensure game container is always visible and full-screen */
@@ -401,6 +404,27 @@
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
   <script>
     console.log('[index.html] Phaser loaded globally:', Phaser.VERSION);
+  </script>
+
+  <script>
+    // Register Service Worker for PWA
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/DataHeist/sw.js')
+          .then((registration) => {
+            console.log('[PWA] ✅ Service Worker registered successfully!');
+            console.log('[PWA] Scope:', registration.scope);
+            console.log('[PWA] 🎮 DataHeist can now be installed as an app!');
+          })
+          .catch((error) => {
+            console.warn('[PWA] ⚠️ Service Worker registration failed:', error);
+            console.log('[PWA] Game will still work normally in browser mode');
+          });
+      });
+    } else {
+      console.log('[PWA] ℹ️ Service Worker not supported in this browser');
+      console.log('[PWA] Game runs in standard browser mode');
+    }
   </script>
 
   <script type="module">

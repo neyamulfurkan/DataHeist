@@ -2,20 +2,15 @@
   "name": "DataHeist - Cyberpunk Hacking Roguelike",
   "short_name": "DataHeist",
   "description": "A cyberpunk-themed roguelike deckbuilder where you hack corporate networks",
-  "start_url": "/",
-  "display": "standalone",
+  "start_url": "/DataHeist/",
+  "scope": "/DataHeist/",
+  "display": "fullscreen",
   "background_color": "#0a0e27",
   "theme_color": "#00f0ff",
   "orientation": "landscape-primary",
   "icons": [
     {
-      "src": "assets/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "assets/icon-512.png",
+      "src": "/DataHeist/assets/sprites/logo.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
