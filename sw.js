@@ -3,19 +3,19 @@
  * Enables offline play and app-like experience
  */
 
-const CACHE_NAME = 'dataheist-v1.0.1';
+const CACHE_NAME = 'dataheist-v1.0.2';
 const URLS_TO_CACHE = [
-  '/DataHeist/',
-  '/DataHeist/index.html',
-  '/DataHeist/styles/game.css',
+  '/DataHeist/public/',
+  '/DataHeist/public/index.html',
+  '/DataHeist/public/styles/game.css',
   '/DataHeist/manifest.json',
-  '/DataHeist/assets/sprites/logo.png',
+  '/DataHeist/public/assets/sprites/logo.png',
   'https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js'
 ];
 
 // Install event - cache assets
 self.addEventListener('install', (event) => {
-  console.log('[ServiceWorker] Installing DataHeist PWA...');
+  console.log('[ServiceWorker] Installing DataHeist PWA v1.0.2...');
   
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -23,7 +23,7 @@ self.addEventListener('install', (event) => {
         console.log('[ServiceWorker] Caching app shell');
         return cache.addAll(URLS_TO_CACHE).catch((error) => {
           console.warn('[ServiceWorker] Some resources failed to cache:', error);
-          // Game will still work, just not fully offline
+          console.warn('[ServiceWorker] Failed URLs will be cached on first visit');
         });
       })
       .then(() => {
@@ -58,6 +58,11 @@ self.addEventListener('activate', (event) => {
 
 // Fetch event - serve from cache, fallback to network
 self.addEventListener('fetch', (event) => {
+  // Skip non-GET requests
+  if (event.request.method !== 'GET') {
+    return;
+  }
+  
   // Only cache same-origin requests
   if (!event.request.url.startsWith(self.location.origin)) {
     return;
@@ -67,28 +72,30 @@ self.addEventListener('fetch', (event) => {
     caches.match(event.request)
       .then((response) => {
         if (response) {
-          // Return cached version
+          console.log('[ServiceWorker] Serving from cache:', event.request.url);
           return response;
         }
         
-        // Fetch from network
+        console.log('[ServiceWorker] Fetching from network:', event.request.url);
         return fetch(event.request)
           .then((response) => {
             // Don't cache non-successful responses
-            if (!response || response.status !== 200) {
+            if (!response || response.status !== 200 || response.type === 'opaque') {
               return response;
             }
             
             // Clone and cache the response
             const responseToCache = response.clone();
             caches.open(CACHE_NAME).then((cache) => {
+              console.log('[ServiceWorker] Caching new resource:', event.request.url);
               cache.put(event.request, responseToCache);
             });
             
             return response;
           })
-          .catch(() => {
-            console.log('[ServiceWorker] Offline - serving from cache only');
+          .catch((error) => {
+            console.log('[ServiceWorker] Fetch failed, offline mode:', error);
+            return caches.match(event.request);
           });
       })
   );
