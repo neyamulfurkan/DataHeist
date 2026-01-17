@@ -460,23 +460,23 @@ export default class BootScene extends Phaser.Scene {
         }
       });
       
-      this.load.audio('music_menu', 'public/assets/audio/music/menu.mp3');
-      this.load.audio('music_map', 'public/assets/audio/music/map.mp3');
-      this.load.audio('music_combat', 'public/assets/audio/music/combat.mp3');
-      this.load.audio('music_boss', 'public/assets/audio/music/boss.mp3');
-      this.load.audio('music_victory', 'public/assets/audio/music/victory.mp3');
+      this.load.audio('music_menu', `${GAME_CONFIG.ASSETS.AUDIO_PATH}music/menu.mp3`);
+      this.load.audio('music_map', `${GAME_CONFIG.ASSETS.AUDIO_PATH}music/map.mp3`);
+      this.load.audio('music_combat', `${GAME_CONFIG.ASSETS.AUDIO_PATH}music/combat.mp3`);
+      this.load.audio('music_boss', `${GAME_CONFIG.ASSETS.AUDIO_PATH}music/boss.mp3`);
+      this.load.audio('music_victory', `${GAME_CONFIG.ASSETS.AUDIO_PATH}music/victory.mp3`);
       
-      this.load.audio('sfx_card_play', 'public/assets/audio/sfx/card_play.mp3');
-      this.load.audio('sfx_card_draw', 'public/assets/audio/sfx/card_draw.mp3');
-      this.load.audio('sfx_damage', 'public/assets/audio/sfx/damage.mp3');
-      this.load.audio('sfx_block', 'public/assets/audio/sfx/block.mp3');
-      this.load.audio('sfx_trace', 'public/assets/audio/sfx/trace.mp3');
-      this.load.audio('sfx_turn_end', 'public/assets/audio/sfx/turn_end.mp3');
-      this.load.audio('sfx_victory', 'public/assets/audio/sfx/victory.mp3');
-      this.load.audio('sfx_defeat', 'public/assets/audio/sfx/defeat.mp3');
-      this.load.audio('sfx_node_click', 'public/assets/audio/sfx/node_click.mp3');
-      this.load.audio('sfx_ui_click', 'public/assets/audio/sfx/ui_click.mp3');
-      this.load.audio('sfx_ui_hover', 'public/assets/audio/sfx/ui_hover.mp3');
+      this.load.audio('sfx_card_play', `${GAME_CONFIG.ASSETS.AUDIO_PATH}sfx/card_play.mp3`);
+      this.load.audio('sfx_card_draw', `${GAME_CONFIG.ASSETS.AUDIO_PATH}sfx/card_draw.mp3`);
+      this.load.audio('sfx_damage', `${GAME_CONFIG.ASSETS.AUDIO_PATH}sfx/damage.mp3`);
+      this.load.audio('sfx_block', `${GAME_CONFIG.ASSETS.AUDIO_PATH}sfx/block.mp3`);
+      this.load.audio('sfx_trace', `${GAME_CONFIG.ASSETS.AUDIO_PATH}sfx/trace.mp3`);
+      this.load.audio('sfx_turn_end', `${GAME_CONFIG.ASSETS.AUDIO_PATH}sfx/turn_end.mp3`);
+      this.load.audio('sfx_victory', `${GAME_CONFIG.ASSETS.AUDIO_PATH}sfx/victory.mp3`);
+      this.load.audio('sfx_defeat', `${GAME_CONFIG.ASSETS.AUDIO_PATH}sfx/defeat.mp3`);
+      this.load.audio('sfx_node_click', `${GAME_CONFIG.ASSETS.AUDIO_PATH}sfx/node_click.mp3`);
+      this.load.audio('sfx_ui_click', `${GAME_CONFIG.ASSETS.AUDIO_PATH}sfx/ui_click.mp3`);
+      this.load.audio('sfx_ui_hover', `${GAME_CONFIG.ASSETS.AUDIO_PATH}sfx/ui_hover.mp3`);
       
       console.log('[BootScene] ✅ Audio assets queued (errors will be handled gracefully)');
       

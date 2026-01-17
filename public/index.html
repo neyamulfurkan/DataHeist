@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="screen-orientation" content="landscape">
+  <meta name="x5-orientation" content="landscape">
+  <meta name="x5-fullscreen" content="true">
   <meta name="description" content="DataHeist - A cyberpunk-themed roguelike deckbuilder where you hack corporate networks">
   <meta name="keywords" content="dataheist, cyberpunk, roguelike, deckbuilder, hacking game">
   <meta name="author" content="DataHeist Development Team">
@@ -20,6 +23,33 @@
   <link rel="icon" type="image/png" href="assets/favicon.png">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
   <link rel="manifest" href="manifest.json">
+  
+  <style>
+    /* Force landscape orientation warning */
+    @media screen and (orientation: portrait) {
+      body::before {
+        content: '⟲ Please rotate your device to landscape mode';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #0a0e27;
+        color: #00f0ff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        font-family: 'Courier New', monospace;
+        text-align: center;
+        z-index: 999999;
+        padding: 20px;
+      }
+      #game-container {
+        display: none;
+      }
+    }
+  </style>
   
   <style>
     #critical-error {
