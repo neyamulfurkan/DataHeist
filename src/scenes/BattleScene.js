@@ -83,6 +83,9 @@ export default class BattleScene extends Phaser.Scene {
     this.playerBlockText = null;
     this.enemyBlockText = null;
     this.enemyIdleTween = null;
+    this.enemyPatrolTween = null;
+    this.enemyOriginalX = 0;
+    this.enemyOriginalY = 0;
     this.lastTracePercent = 0;
     
     
@@ -346,35 +349,128 @@ export default class BattleScene extends Phaser.Scene {
       return;
     }
 
-    console.log('[BattleScene] startEnemyIdleAnimation: Starting idle animation');
+    console.log('[BattleScene] startEnemyIdleAnimation: Starting dynamic patrol animation');
 
-    // Stop existing animation if any
+    // Stop existing animations if any
     if (this.enemyIdleTween) {
       this.enemyIdleTween.stop();
       this.enemyIdleTween = null;
     }
+    
+    if (this.enemyPatrolTween) {
+      this.enemyPatrolTween.stop();
+      this.enemyPatrolTween = null;
+    }
 
-    const originalY = this.enemySprite.y;
+    // Store original position for patrol boundaries
+    this.enemyOriginalX = this.enemySprite.x;
+    this.enemyOriginalY = this.enemySprite.y;
 
-    // DYNAMIC: Idle intensity based on enemy HP
+    // DYNAMIC: Patrol intensity based on enemy HP and player trace
     const hpPercent = this.enemy.currentHP / this.enemy.maxHP;
-    const floatDistance = 4 + (6 * (1 - hpPercent)); // 4-10px based on damage
-    const duration = 3000 - (1000 * (1 - hpPercent)); // Faster when damaged
+    const tracePercent = this.runner.currentTrace / this.runner.maxTrace;
+    
+    // Movement ranges - wider when searching (high trace)
+    const horizontalRange = 80 + (tracePercent * 120); // 80-200px horizontal
+    const verticalRange = 40 + (tracePercent * 60); // 40-100px vertical
+    
+    // Speed - faster when damaged or trace is high
+    const baseSpeed = 2500;
+    const speedMultiplier = 1 - (hpPercent * 0.3) - (tracePercent * 0.4); // Up to 70% faster
+    const patrolSpeed = Math.max(baseSpeed * (1 - speedMultiplier), 1000);
 
-    this.enemyIdleTween = this.tweens.add({
-      targets: this.enemySprite,
-      y: originalY - floatDistance,
-      duration: Math.max(duration, 1500),
-      ease: 'Sine.InOut',
-      yoyo: true,
-      repeat: -1
-    });
+    // CONTINUOUS PATROL: Enemy moves in unpredictable pattern
+    this.createPatrolPattern(horizontalRange, verticalRange, patrolSpeed);
 
-    console.log('[BattleScene] startEnemyIdleAnimation: Dynamic idle animation started', {
+    console.log('[BattleScene] startEnemyIdleAnimation: Dynamic patrol started', {
       hpPercent: (hpPercent * 100).toFixed(1) + '%',
-      floatDistance,
-      duration
+      tracePercent: (tracePercent * 100).toFixed(1) + '%',
+      horizontalRange: horizontalRange.toFixed(0) + 'px',
+      verticalRange: verticalRange.toFixed(0) + 'px',
+      patrolSpeed: patrolSpeed.toFixed(0) + 'ms'
     });
+  }
+
+  /**
+   * Create dynamic patrol pattern for enemy (searching behavior)
+   * @param {number} horizontalRange - Horizontal movement range
+   * @param {number} verticalRange - Vertical movement range
+   * @param {number} speed - Movement speed in ms
+   * @private
+   */
+  createPatrolPattern(horizontalRange, verticalRange, speed) {
+    if (!this.enemySprite || !this.enemyOriginalX || !this.enemyOriginalY) {
+      console.error('[BattleScene] createPatrolPattern: Missing sprite or original position');
+      return;
+    }
+
+    // Stop any existing patrol
+    if (this.enemyPatrolTween) {
+      this.enemyPatrolTween.stop();
+    }
+
+    // Generate random patrol point within range
+    const randomPatrol = () => {
+      const targetX = this.enemyOriginalX + (Math.random() - 0.5) * horizontalRange;
+      const targetY = this.enemyOriginalY + (Math.random() - 0.5) * verticalRange;
+      
+      // Clamp to screen boundaries
+      const clampedX = Phaser.Math.Clamp(targetX, 200, GAME_CONFIG.PHASER.WIDTH - 200);
+      const clampedY = Phaser.Math.Clamp(targetY, 100, 400);
+
+      return { x: clampedX, y: clampedY };
+    };
+
+    // Start patrol sequence
+    const patrol = () => {
+      const target = randomPatrol();
+      
+      // Calculate distance for dynamic speed
+      const distance = Phaser.Math.Distance.Between(
+        this.enemySprite.x,
+        this.enemySprite.y,
+        target.x,
+        target.y
+      );
+      
+      const moveDuration = (distance / 200) * speed; // Scale speed by distance
+
+      this.enemyPatrolTween = this.tweens.add({
+        targets: this.enemySprite,
+        x: target.x,
+        y: target.y,
+        duration: moveDuration,
+        ease: 'Sine.InOut',
+        onComplete: () => {
+          // Pause briefly at each point (shorter pause when trace is high)
+          const tracePercent = this.runner.currentTrace / this.runner.maxTrace;
+          const pauseDuration = Math.max(200, 800 - (tracePercent * 600));
+          
+          this.time.delayedCall(pauseDuration, () => {
+            if (this.enemySprite && this.enemySprite.scene) {
+              patrol(); // Continue patrol
+            }
+          });
+        }
+      });
+    };
+
+    // Start patrolling
+    patrol();
+  }
+
+  /**
+   * Update enemy patrol intensity based on current game state
+   * Call this when trace or HP changes significantly
+   * @private
+   */
+  updatePatrolIntensity() {
+    if (!this.enemySprite || !this.enemy || !this.runner) {
+      return;
+    }
+
+    // Restart patrol with new intensity
+    this.startEnemyIdleAnimation();
   }
 
   /**
@@ -618,11 +714,14 @@ export default class BattleScene extends Phaser.Scene {
       if (tracePercent >= 0.9 && this.lastTracePercent < 0.9) {
         animateEnemyAlert(this, this.enemySprite, 'critical').catch(err => console.error(err));
         this.showCombatLog('⚠️ CRITICAL TRACE LEVEL!');
+        this.updatePatrolIntensity(); // Increase search intensity
       } else if (tracePercent >= 0.66 && this.lastTracePercent < 0.66) {
         animateEnemyAlert(this, this.enemySprite, 'high').catch(err => console.error(err));
         this.showCombatLog('⚠️ High trace detected!');
+        this.updatePatrolIntensity(); // Increase search intensity
       } else if (tracePercent >= 0.33 && this.lastTracePercent < 0.33) {
         animateEnemyAlert(this, this.enemySprite, 'medium').catch(err => console.error(err));
+        this.updatePatrolIntensity(); // Increase search intensity
       }
       this.lastTracePercent = tracePercent;
       });
@@ -2006,7 +2105,14 @@ createPersistentShield(x, y, isPlayer) {
 
       this.showCombatLog('VICTORY!');
       
-      // DYNAMIC: Enemy defeat animation
+      // DYNAMIC: Stop patrol and play defeat animation
+      if (this.enemyPatrolTween) {
+        this.enemyPatrolTween.stop();
+      }
+      if (this.enemyIdleTween) {
+        this.enemyIdleTween.stop();
+      }
+      
       if (this.enemySprite && this.enemySprite.scene) {
         this.tweens.add({
           targets: this.enemySprite,
@@ -2268,10 +2374,15 @@ createPersistentShield(x, y, isPlayer) {
         this.activeShieldGraphics = [];
       }
 
-      // CLEANUP: Stop enemy idle animation
+      // CLEANUP: Stop enemy animations
       if (this.enemyIdleTween) {
         this.enemyIdleTween.stop();
         this.enemyIdleTween = null;
+      }
+      
+      if (this.enemyPatrolTween) {
+        this.enemyPatrolTween.stop();
+        this.enemyPatrolTween = null;
       }
 
       this.input.keyboard.removeAllListeners();
