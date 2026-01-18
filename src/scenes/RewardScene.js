@@ -224,6 +224,12 @@ export default class RewardScene extends Phaser.Scene {
       relicText.setOrigin(0.5);
 
       console.log('[RewardScene] displayRewardsSummary: Relic displayed:', this.rewards.relic.name);
+      
+      // CRITICAL FIX: Add relic to runner
+      if (this.runner && this.runner.addRelic) {
+        this.runner.addRelic(this.rewards.relic);
+        console.log('[RewardScene] displayRewardsSummary: Relic added to runner');
+      }
     }
 
     console.log('[RewardScene] displayRewardsSummary: Summary displayed successfully');

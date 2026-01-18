@@ -100,6 +100,30 @@ export const STATUS_EFFECTS = {
     stackable: true,
     tickBehavior: 'damage_decay',
     tickValue: 2
+  },
+  
+  reflect: {
+    id: 'reflect',
+    name: 'Reflect',
+    description: 'Return damage when taking unblocked damage',
+    type: 'buff',
+    defaultDuration: 1,
+    icon: 'icon_reflect',
+    color: 0x00f0ff,
+    stackable: true,
+    tickBehavior: null
+  },
+  
+  doublePlay: {
+    id: 'doublePlay',
+    name: 'Double Play',
+    description: 'Next card is played twice',
+    type: 'buff',
+    defaultDuration: 1,
+    icon: 'icon_double',
+    color: 0xffcc00,
+    stackable: false,
+    tickBehavior: null
   }
 };
 

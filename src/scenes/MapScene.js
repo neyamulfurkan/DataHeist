@@ -482,8 +482,15 @@ loadExistingRun() {
         fontFamily: GAME_CONFIG.UI.TEXT.FONT_FAMILY
       }).setOrigin(1, 0.5);
       deckSizeText.setName('deckSizeText');
+      
+      const relicsText = this.add.text(40, 690, '', {
+        fontSize: '14px',
+        color: GAME_CONFIG.UI.COLORS.MAGENTA_PRIMARY,
+        fontFamily: GAME_CONFIG.UI.TEXT.FONT_FAMILY
+      });
+      relicsText.setName('relicsText');
 
-      this.hudContainer.add([hudBg, runnerName, traceText, actText, creditsText, deckSizeText]);
+      this.hudContainer.add([hudBg, runnerName, traceText, actText, creditsText, deckSizeText, relicsText]);
 
       this.updateHUD();
 
@@ -531,6 +538,16 @@ loadExistingRun() {
       if (deckSizeText) {
         const deckSize = this.runner.deck ? this.runner.deck.getAllCards().length : 0;
         deckSizeText.setText(`Deck: ${deckSize} cards`);
+      }
+      
+      const relicsText = this.hudContainer.getByName('relicsText');
+      if (relicsText && this.runner && this.runner.relics) {
+        if (this.runner.relics.length > 0) {
+          const relicNames = this.runner.relics.map(r => r.name).join(', ');
+          relicsText.setText(`Relics: ${relicNames}`);
+        } else {
+          relicsText.setText('');
+        }
       }
 
     } catch (error) {
@@ -953,17 +970,37 @@ loadExistingRun() {
 
       if (cons.addCard) {
         console.log('[MapScene] handleEventChoice: Adding card:', cons.addCard);
-        this.addCardToDeck(cons.addCard);
+        
+        if (cons.addCard === 'random_rare') {
+          const rareCards = rewardSystem.selectCardRewards(1, this.runState.actNumber, 'rare');
+          if (rareCards && rareCards.length > 0) {
+            this.runner.deck.addCard(rareCards[0], 'discard');
+            console.log('[MapScene] handleEventChoice: Added random rare card:', rareCards[0].name);
+          }
+        } else if (cons.addCard === 'random_common') {
+          const commonCards = rewardSystem.selectCardRewards(1, this.runState.actNumber, null);
+          if (commonCards && commonCards.length > 0) {
+            this.runner.deck.addCard(commonCards[0], 'discard');
+            console.log('[MapScene] handleEventChoice: Added random common card:', commonCards[0].name);
+          }
+        } else {
+          this.addCardToDeck(cons.addCard);
+        }
       }
 
       if (cons.removeCard) {
         console.log('[MapScene] handleEventChoice: Removing card:', cons.removeCard);
         this.removeCardFromDeck(cons.removeCard);
       }
-
-      if (cons.upgradeRandomCard) {
-        console.log('[MapScene] handleEventChoice: Upgrading random card');
-        this.upgradeRandomCard();
+      
+      if (cons.gainIntel) {
+        console.log('[MapScene] handleEventChoice: Discovering intel:', cons.gainIntel);
+        progressionSystem.discoverIntel(cons.gainIntel);
+        
+        const unlockedCard = this.checkIntelUnlocks(cons.gainIntel);
+        if (unlockedCard) {
+          this.showMessage(`Intel discovered! Unlocked card: ${unlockedCard}`);
+        }
       }
 
       this.showEventResult(choice.resultText, node);
@@ -1020,6 +1057,24 @@ loadExistingRun() {
       console.error('[MapScene] showEventResult: Error name:', error.name);
       console.error('[MapScene] showEventResult: Error message:', error.message);
     }
+  }
+
+  checkIntelUnlocks(intelId) {
+    const INTEL_UNLOCKS = {
+      'intel_memory_fragment': 'utility_uncommon_002',
+      'intel_encrypted_message': 'exploit_uncommon_005',
+      'intel_corporate_secrets': 'defense_uncommon_004',
+      'intel_backdoor_location': 'utility_rare_001'
+    };
+    
+    const unlockedCardId = INTEL_UNLOCKS[intelId];
+    if (unlockedCardId) {
+      progressionSystem.unlockCard(unlockedCardId);
+      const card = new Card(unlockedCardId);
+      return card.name;
+    }
+    
+    return null;
   }
 
   completeEventNode(node) {

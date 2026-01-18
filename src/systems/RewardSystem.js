@@ -334,6 +334,13 @@ class RewardSystem {
         while (attempts < 50 && !selectedCard) {
           const rarity = this._selectRarity(weights);
           
+          // CRITICAL FIX: Block legendary cards in Act 1
+          if (actNumber === 1 && rarity === 'legendary') {
+            console.log('[RewardSystem] selectCardRewards: Act 1 cannot drop legendary, rerolling');
+            attempts++;
+            continue;
+          }
+          
           const pool = CARDS_BY_RARITY[rarity];
           if (!pool || pool.length === 0) {
             console.error('[RewardSystem] selectCardRewards: Empty card pool for rarity:', rarity);
@@ -671,13 +678,42 @@ class RewardSystem {
       return [];
     }
 
-    const relicPool = [
+    // Base relics (available in all acts)
+    const baseRelics = [
       'relic_stealth_module',
       'relic_cpu_optimizer',
       'relic_trace_buffer',
       'relic_exploit_amplifier',
       'relic_defense_matrix'
     ];
+    
+    // Act 2+ relics (more powerful)
+    const advancedRelics = [
+      'relic_data_siphon',
+      'relic_overclocking_chip',
+      'relic_neural_link',
+      'relic_quantum_cache'
+    ];
+    
+    // Act 3 relics (most powerful)
+    const eliteRelics = [
+      'relic_ghost_protocol',
+      'relic_system_backdoor',
+      'relic_ai_companion',
+      'relic_trace_eraser',
+      'relic_memory_core',
+      'relic_exploit_framework'
+    ];
+    
+    let relicPool = [...baseRelics];
+    
+    if (actNumber >= 2) {
+      relicPool = [...relicPool, ...advancedRelics];
+    }
+    
+    if (actNumber >= 3) {
+      relicPool = [...relicPool, ...eliteRelics];
+    }
 
     console.log('[RewardSystem] getRelicPool: Returning', relicPool.length, 'relics for act', actNumber);
 
@@ -712,7 +748,7 @@ class RewardSystem {
         id: relicId,
         name: this._getRelicName(relicId),
         description: this._getRelicDescription(relicId),
-        spriteKey: `relic_${relicId}`
+        spriteKey: relicId
       };
 
       console.log('[RewardSystem] selectRelic: Selected relic:', relic.name);
@@ -738,7 +774,17 @@ class RewardSystem {
       'relic_cpu_optimizer': 'CPU Optimizer',
       'relic_trace_buffer': 'Trace Buffer',
       'relic_exploit_amplifier': 'Exploit Amplifier',
-      'relic_defense_matrix': 'Defense Matrix'
+      'relic_defense_matrix': 'Defense Matrix',
+      'relic_data_siphon': 'Data Siphon',
+      'relic_overclocking_chip': 'Overclocking Chip',
+      'relic_neural_link': 'Neural Link',
+      'relic_quantum_cache': 'Quantum Cache',
+      'relic_ghost_protocol': 'Ghost Protocol',
+      'relic_system_backdoor': 'System Backdoor',
+      'relic_ai_companion': 'AI Companion',
+      'relic_trace_eraser': 'Trace Eraser',
+      'relic_memory_core': 'Memory Core',
+      'relic_exploit_framework': 'Exploit Framework'
     };
 
     return names[relicId] || 'Unknown Relic';
@@ -756,7 +802,17 @@ class RewardSystem {
       'relic_cpu_optimizer': 'Start each combat with +1 CPU',
       'relic_trace_buffer': 'Increase max Trace by 20',
       'relic_exploit_amplifier': 'Deal +1 damage with all Exploit cards',
-      'relic_defense_matrix': 'Gain +2 Block with all Defense cards'
+      'relic_defense_matrix': 'Gain +2 Block with all Defense cards',
+      'relic_data_siphon': 'Gain 10 credits after each combat',
+      'relic_overclocking_chip': 'Gain +1 max CPU (permanent)',
+      'relic_neural_link': 'Draw 1 extra card at start of each turn',
+      'relic_quantum_cache': 'Retain 1 random card at end of turn',
+      'relic_ghost_protocol': 'Start each combat with 5 Block',
+      'relic_system_backdoor': 'First card each combat costs 0',
+      'relic_ai_companion': 'Upgrade 1 random card at start of each combat',
+      'relic_trace_eraser': 'Heal 5 Trace after each combat',
+      'relic_memory_core': 'Duplicate the first card you play each combat',
+      'relic_exploit_framework': 'All Exploit cards cost 1 less (minimum 0)'
     };
 
     return descriptions[relicId] || 'Unknown effect';

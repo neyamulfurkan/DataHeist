@@ -94,6 +94,8 @@ export default class BattleScene extends Phaser.Scene {
    * @param {boolean} [data.isBoss=false] - Is this a boss combat
    */
   init(data) {
+    this.combatStartTurn = 0;
+    
     console.log('[BattleScene] init: Receiving scene data', {
       hasRunner: !!data?.runner,
       enemyId: data?.enemyId,
@@ -423,6 +425,8 @@ export default class BattleScene extends Phaser.Scene {
       // CRITICAL FIX: Update intent display immediately
       this.hudElements.updateEnemyIntent(this.enemy.currentIntent);
       
+      this.combatStartTurn = this.gameState.turn;
+      
       // Log the FIRST turn intent clearly
       this.showCombatLog(`Combat Start: ${this.runner.name} vs ${this.enemy.name}`);
       this.showCombatLog(`Enemy Intent: ${this.enemy.getIntentDescription()}`);
@@ -616,6 +620,22 @@ export default class BattleScene extends Phaser.Scene {
         this.showCombatLog(`CPU +${data.amount}`);
       });
 
+      this.events.on('cardsDiscarded', (data) => {
+        console.log('[BattleScene] Event: cardsDiscarded', {
+          count: data.count,
+          handSize: data.handSize
+        });
+        this.battleUI.updateHand(this.runner.deck.hand);
+        this.battleUI.updatePileCounts();
+      });
+
+      this.events.on('artifactTriggered', (data) => {
+        console.log('[BattleScene] Event: artifactTriggered', {
+          blockedDebuff: data.blockedDebuff
+        });
+        this.showCombatLog(`Artifact blocked ${data.blockedDebuff}!`);
+      });
+
       this.events.on('victory', () => {
         console.log('[BattleScene] Event: victory');
         this.handleVictory();
@@ -646,6 +666,8 @@ export default class BattleScene extends Phaser.Scene {
         this.hudElements.updateEnemyHP(data.enemy.hp, data.enemy.maxHP, data.enemy.name);
         this.hudElements.updateTraceMeter(data.player.trace, data.player.maxTrace);
       });
+
+      this.setupCombatLogListener();
 
       console.log('[BattleScene] setupEventListeners: Event listeners setup complete');
 
@@ -1197,6 +1219,14 @@ export default class BattleScene extends Phaser.Scene {
         this.updateCardPlayability();
       });
 
+      // VISUAL FEEDBACK: Show special mechanics in combat log
+      if (card.id === 'exploit_uncommon_003') {
+        const chainCount = combatSystem.chainExploitPlaysThisTurn || 0;
+        if (chainCount > 0) {
+          this.showCombatLog(`Chain Exploit: Next play deals +${chainCount * 2} damage!`);
+        }
+      }
+      
       this.showCombatLog(`Played: ${card.name}`);
 
       // Small delay before allowing next action
@@ -1859,6 +1889,20 @@ createPersistentShield(x, y, isPlayer) {
     try {
       this.battleUI.setCardPlayability(this.gameState);
 
+      // VISUAL FEEDBACK: Update Total System Compromise cost display
+      const handCards = this.runner?.deck?.hand || [];
+      const totalSystemCard = handCards.find(c => c.id === 'exploit_rare_002');
+      if (totalSystemCard && this.gameState.cardsPlayedThisTurn) {
+        const actualCost = totalSystemCard.getActualCost(this.gameState);
+        if (actualCost < totalSystemCard.cost) {
+          console.log('[BattleScene] updateCardPlayability: Total System Compromise reduced cost:', {
+            baseCost: totalSystemCard.cost,
+            actualCost: actualCost,
+            reduction: totalSystemCard.cost - actualCost
+          });
+        }
+      }
+
       console.log('[BattleScene] updateCardPlayability: Card playability updated');
 
     } catch (error) {
@@ -1878,6 +1922,16 @@ createPersistentShield(x, y, isPlayer) {
       enemyDefeated: this.enemy.isDefeated(),
       isBoss: this.isBossCombat
     });
+    
+    const turnsToWin = this.gameState.turn - this.combatStartTurn;
+    console.log('[BattleScene] handleVictory: Combat duration:', turnsToWin, 'turns');
+    
+    if (turnsToWin <= 5 && !this.isBossCombat) {
+      const quickBonus = Math.max(1, 6 - turnsToWin);
+      this.runner.modifyTrace(-quickBonus, 'quick_victory_bonus');
+      console.log('[BattleScene] handleVictory: Quick Victory! Trace reduced by', quickBonus);
+      this.showCombatLog(`Quick Victory! Trace -${quickBonus}`);
+    }
 
     if (this.isProcessingAction) {
       console.log('[BattleScene] handleVictory: Already processing action, delaying victory');
@@ -2059,6 +2113,18 @@ createPersistentShield(x, y, isPlayer) {
         message
       });
     }
+  }
+
+  /**
+   * Setup listener for combat log events from CombatSystem
+   * @private
+   */
+  setupCombatLogListener() {
+    this.events.on('combatLog', (data) => {
+      if (data && data.message) {
+        this.showCombatLog(data.message);
+      }
+    });
   }
 
   /**

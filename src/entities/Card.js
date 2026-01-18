@@ -205,8 +205,11 @@ export default class Card {
       return false;
     }
 
-    if (currentCPU < this.cost) {
-      console.log('[Card.js] isPlayable: Insufficient CPU -', `need ${this.cost}, have ${currentCPU}`);
+    // DYNAMIC COST CALCULATION
+    const actualCost = this.getActualCost(gameState);
+    
+    if (currentCPU < actualCost) {
+      console.log('[Card.js] isPlayable: Insufficient CPU -', `need ${actualCost}, have ${currentCPU}`);
       return false;
     }
 
@@ -409,6 +412,32 @@ export default class Card {
     }
 
     return text;
+  }
+
+  /**
+   * Get actual CPU cost accounting for dynamic cost reduction
+   * @param {Object} gameState - Current game state
+   * @returns {number} Actual cost to play this card
+   */
+  getActualCost(gameState) {
+    let actualCost = this.cost;
+    
+    // Total System Compromise: Costs 1 less per card played this turn
+    if (this.id === 'exploit_rare_002' && gameState && gameState.cardsPlayedThisTurn) {
+      const cardsPlayed = gameState.cardsPlayedThisTurn.length;
+      const reduction = cardsPlayed * 1;
+      actualCost = Math.max(0, this.cost - reduction);
+      
+      console.log('[Card] getActualCost: Total System Compromise cost reduction', {
+        cardName: this.name,
+        baseCost: this.cost,
+        cardsPlayed,
+        reduction,
+        actualCost
+      });
+    }
+    
+    return actualCost;
   }
 
   /**

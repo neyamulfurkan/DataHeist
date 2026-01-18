@@ -466,12 +466,12 @@ export const CARD_LIBRARY = {
     cost: 1,
     rarity: "uncommon",
     effects: [
-      { type: "damage", target: "enemy", value: 6 }
+      { type: "damage", target: "enemy", value: 6, scaling: "chain" }
     ],
     description: "Deal 6 damage. Each time this deals damage this turn, deal 2 more damage.",
     upgradeEffect: { type: "damage", value: 9 },
     spriteKey: "card_exploit_003",
-    keywords: [],
+    keywords: ["scaling"],
     isExhaust: false,
     isEthereal: false
   },
@@ -542,12 +542,13 @@ export const CARD_LIBRARY = {
     cost: 1,
     rarity: "uncommon",
     effects: [
-      { type: "block", target: "self", value: 8 }
+      { type: "block", target: "self", value: 8 },
+      { type: "conditionalBlock", target: "self", value: 4, condition: "defensePlayedThisTurn" }
     ],
     description: "Gain 8 Block. If you have played another Defense card this turn, gain 4 more Block.",
     upgradeEffect: { type: "block", value: 12 },
     spriteKey: "card_defense_002",
-    keywords: [],
+    keywords: ["conditional"],
     isExhaust: false,
     isEthereal: false
   },
@@ -560,12 +561,12 @@ cost: 2,
 rarity: "uncommon",
 effects: [
 { type: "block", target: "self", value: 10 },
-{ type: "reflect", target: "self", value: 4 }
+{ type: "applyStatus", target: "self", status: "reflect", stacks: 4 }
 ],
-description: "Gain 10 Block. Whenever you receive unblocked damage this turn, deal 4 damage to the attacker.",
+description: "Gain 10 Block. Gain 4 Reflect (whenever you take unblocked damage this turn, deal that much damage back).",
 upgradeEffect: { value: 7 },
 spriteKey: "card_defense_003",
-keywords: [],
+keywords: ["reflect"],
 isExhaust: false,
 isEthereal: false
 },
@@ -622,21 +623,21 @@ isExhaust: true,
 isEthereal: false
 },
 utility_uncommon_003: {
-id: "utility_uncommon_003",
-name: "Parallel Processing",
-type: "utility",
-cost: 1,
-rarity: "uncommon",
-effects: [
-{ type: "playTwice", target: "self", value: 1 }
-],
-description: "The next card you play this turn is played twice.",
-upgradeEffect: { cost: 0 },
-spriteKey: "card_utility_003",
-keywords: ["exhaust"],
-isExhaust: true,
-isEthereal: false
-},
+    id: "utility_uncommon_003",
+    name: "Parallel Processing",
+    type: "utility",
+    cost: 1,
+    rarity: "uncommon",
+    effects: [
+      { type: "applyStatus", target: "self", status: "doublePlay", stacks: 1 }
+    ],
+    description: "The next card you play this turn is played twice.",
+    upgradeEffect: { cost: 0 },
+    spriteKey: "card_utility_003",
+    keywords: ["exhaust"],
+    isExhaust: true,
+    isEthereal: false
+  },
 utility_uncommon_004: {
 id: "utility_uncommon_004",
 name: "Refactor",

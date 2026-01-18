@@ -65,6 +65,12 @@ class CombatSystem {
       iceId: ice?.id,
       hasEventEmitter: !!eventEmitter
     });
+    
+    // Initialize chain exploit tracking
+    this.chainExploitPlaysThisTurn = 0;
+    
+    // Initialize chain exploit tracking
+    this.chainExploitPlaysThisTurn = 0;
 
     if (!runner || !(runner instanceof Runner)) {
       console.error('[CombatSystem] initCombat: Invalid runner parameter', {
@@ -140,6 +146,8 @@ class CombatSystem {
     }
 
     this.gameState.phase = 'ready';
+    
+    this.applyRelicEffects();
 
     console.log('[CombatSystem] initCombat: Combat initialized successfully', {
       player: this.gameState.player.name,
@@ -170,6 +178,28 @@ class CombatSystem {
     return this.gameState;
   }
 
+  applyRelicEffects() {
+    if (!this.gameState || !this.gameState.player) {
+      console.error('[CombatSystem] applyRelicEffects: Invalid game state');
+      return;
+    }
+    
+    const relicEffects = this.gameState.player.getRelicEffects();
+    
+    if (relicEffects.bonusStartingCPU > 0) {
+      this.gameState.player.maxCPU += relicEffects.bonusStartingCPU;
+      this.gameState.player.currentCPU = this.gameState.player.maxCPU;
+      console.log('[CombatSystem] applyRelicEffects: CPU Optimizer - max CPU increased to', this.gameState.player.maxCPU);
+    }
+    
+    if (relicEffects.maxTraceIncrease > 0) {
+      this.gameState.player.maxTrace += relicEffects.maxTraceIncrease;
+      console.log('[CombatSystem] applyRelicEffects: Trace Buffer - max trace increased to', this.gameState.player.maxTrace);
+    }
+    
+    console.log('[CombatSystem] applyRelicEffects: Relic effects applied:', relicEffects);
+  }
+
   startTurn() {
     if (!this.gameState) {
       console.error('[CombatSystem] startTurn: No active combat, gameState is null');
@@ -184,6 +214,8 @@ class CombatSystem {
     this.gameState.cardsPlayedThisTurn = [];
     this.gameState.actionsThisTurn = [];
     this.gameState.drawsThisTurn = 0; // FIXED: Reset draw counter each turn
+    this.chainExploitPlaysThisTurn = 0; // RESET: Chain exploit counter
+    this.chainExploitPlaysThisTurn = 0; // RESET: Chain exploit counter
 
     const player = this.gameState.player;
 
@@ -257,6 +289,22 @@ class CombatSystem {
     }
 
     player.incrementTurn();
+    
+    // ARCHITECT PASSIVE: Strategic Insight - draw extra card at turn start
+    if (player.passiveAbility && player.passiveAbility.id === 'strategic_insight') {
+      console.log('[CombatSystem] startTurn: Triggering Architect passive ability');
+      try {
+        player.passiveAbility.effect(this.gameState);
+      } catch (error) {
+        console.error('[CombatSystem] startTurn: Architect passive failed', error);
+      }
+    }
+    
+    const relicEffects = player.getRelicEffects();
+    if (relicEffects.traceReductionPerTurn > 0) {
+      player.modifyTrace(-relicEffects.traceReductionPerTurn, 'relic:stealth_module');
+      console.log('[CombatSystem] startTurn: Stealth Module reduced trace by', relicEffects.traceReductionPerTurn);
+    }
 
     console.log('[CombatSystem] startTurn: Turn started', {
       turn: this.gameState.turn,
@@ -281,7 +329,7 @@ class CombatSystem {
     return true;
   }
 
-  playCard(card) {
+  async playCard(card) {
     if (!this.gameState) {
       console.error('[CombatSystem] playCard: No active combat');
       return false;
@@ -345,12 +393,16 @@ class CombatSystem {
       return false;
     }
 
-    const cpuSpent = player.spendCPU(card.cost, `playCard:${card.name}`);
+    // DYNAMIC COST: Use actual cost (may be reduced)
+    const actualCost = card.getActualCost ? card.getActualCost(this.gameState) : card.cost;
+    
+    const cpuSpent = player.spendCPU(actualCost, `playCard:${card.name}`);
     
     if (!cpuSpent) {
       console.error('[CombatSystem] playCard: Failed to spend CPU', {
         cardName: card.name,
-        cardCost: card.cost,
+        baseCost: card.cost,
+        actualCost: actualCost,
         playerCPU: player.currentCPU
       });
       return false;
@@ -367,7 +419,7 @@ class CombatSystem {
       return false;
     }
 
-    this.gameState.cardsPlayedThisTurn.push(card);
+this.gameState.cardsPlayedThisTurn.push(card);
     this.combatStats.totalCardsPlayed++;
     this.combatStats.cardsPlayedByType[card.type]++;
 
@@ -379,14 +431,31 @@ class CombatSystem {
 
     console.log('[CombatSystem] playCard: Card played successfully', {
       cardName: card.name,
-      cpuSpent: card.cost,
+      cpuSpent: actualCost,
       cpuRemaining: player.currentCPU,
       cardsPlayedThisTurn: this.gameState.cardsPlayedThisTurn.length,
       totalCardsPlayed: this.combatStats.totalCardsPlayed
     });
 
+    // CHECK: Double Play buff active?
+    const hasDoublePlay = player.statusEffects.some(e => e.type === 'doublePlay' && e.stacks > 0);
+    
     try {
+      // FIRST EXECUTION: Always execute card effects
       this.executeCardEffects(card, this.gameState);
+      
+      // DOUBLE PLAY: Execute effects SECOND time if buff active
+      if (hasDoublePlay) {
+        console.log('[CombatSystem] playCard: Double Play active - executing effects SECOND time!');
+        this.showCombatLog(`DOUBLE PLAY: ${card.name} played twice!`);
+        
+        // FIXED: Execute effects again immediately (no await needed, not async function)
+        this.executeCardEffects(card, this.gameState);
+        
+        // Remove Double Play buff after second execution
+        player.statusEffects = player.statusEffects.filter(e => e.type !== 'doublePlay');
+        console.log('[CombatSystem] playCard: Double Play consumed');
+      }
     } catch (error) {
       console.error('[CombatSystem] playCard: Error executing card effects', {
         cardName: card.name,
@@ -494,6 +563,18 @@ class CombatSystem {
             this._executeTraceIncreaseEffect(effect, card, gameState);
             break;
 
+          case 'conditionalBlock':
+            this._executeConditionalBlockEffect(effect, card, gameState);
+            break;
+
+          case 'discard':
+            this._executeDiscardEffect(effect, card, gameState);
+            break;
+
+          case 'retain':
+            this._executeRetainEffect(effect, card, gameState);
+            break;
+
           default:
             console.warn('[CombatSystem] executeCardEffects: Unknown effect type', {
               effectType: effect.type,
@@ -520,10 +601,32 @@ class CombatSystem {
     });
   }
 
-  _executeDamageEffect(effect, card, gameState) {
+_executeDamageEffect(effect, card, gameState) {
     const target = effect.target === 'enemy' ? gameState.enemy : gameState.player;
     const source = effect.target === 'enemy' ? gameState.player : gameState.enemy;
-    const baseDamage = effect.value || 0;
+    let baseDamage = effect.value || 0;
+
+    // CHAIN EXPLOIT: Scaling damage - FIXED increment happens AFTER using current count
+    if (effect.scaling === 'chain' && card.id === 'exploit_uncommon_003') {
+      const bonusDamage = this.chainExploitPlaysThisTurn * 2;
+      baseDamage += bonusDamage;
+      
+      console.log('[CombatSystem] _executeDamageEffect: Chain Exploit scaling', {
+        cardName: card.name,
+        originalDamage: effect.value,
+        bonusDamage,
+        totalDamage: baseDamage,
+        playsThisTurn: this.chainExploitPlaysThisTurn,
+        nextPlayBonus: (this.chainExploitPlaysThisTurn + 1) * 2
+      });
+      
+      if (bonusDamage > 0) {
+        this.showCombatLog(`Chain Exploit +${bonusDamage} bonus damage!`);
+      }
+      
+      // INCREMENT AFTER using count (so first play = +0, second = +2, third = +4, etc.)
+      this.chainExploitPlaysThisTurn++;
+    }
 
     console.log('[CombatSystem] _executeDamageEffect: Dealing damage', {
       cardName: card.name,
@@ -547,7 +650,7 @@ class CombatSystem {
     });
   }
 
-  _executeBlockEffect(effect, card, gameState) {
+_executeBlockEffect(effect, card, gameState) {
     const target = effect.target === 'self' || effect.target === 'player' ? gameState.player : gameState.enemy;
     let baseBlock = effect.value || 0;
     
@@ -566,7 +669,7 @@ class CombatSystem {
         }
       }
     }
-
+    
     // Ensure baseBlock is a number - extract from object if needed
     if (typeof baseBlock === 'object' && baseBlock !== null) {
       console.warn('[CombatSystem] _executeBlockEffect: Block value is object, extracting', baseBlock);
@@ -621,6 +724,7 @@ class CombatSystem {
         maxHandSize: MAX_HAND_SIZE,
         cardName: card.name
       });
+      this.showCombatLog(`Hand is full! Cannot draw.`);
       return;
     }
     
@@ -634,7 +738,12 @@ class CombatSystem {
         currentHandSize,
         maxHandSize: MAX_HAND_SIZE
       });
+      this.showCombatLog(`Hand is full! Cannot draw.`);
       return;
+    }
+    
+    if (actualDrawCount < drawCount) {
+      this.showCombatLog(`Drew ${actualDrawCount} cards (hand limit)`);
     }
     
     console.log('[CombatSystem] _executeDrawEffect: Drawing cards', {
@@ -815,6 +924,143 @@ _executeTraceReductionEffect(effect, card, gameState) {
     });
   }
 
+  /**
+   * Execute discard effect (Debug Mode card)
+   * @param {Object} effect - Effect object
+   * @param {Card} card - Card being played
+   * @param {Object} gameState - Current game state
+   * @private
+   */
+  _executeDiscardEffect(effect, card, gameState) {
+    const discardCount = effect.value || 1;
+
+    console.log('[CombatSystem] _executeDiscardEffect: Player must discard cards', {
+      cardName: card.name,
+      discardCount,
+      currentHandSize: gameState.player.deck.hand.length
+    });
+
+    if (gameState.player.deck.hand.length === 0) {
+      console.warn('[CombatSystem] _executeDiscardEffect: Hand is empty, cannot discard');
+      this.showCombatLog('No cards to discard');
+      return;
+    }
+
+    // Discard random cards from hand
+    for (let i = 0; i < discardCount && gameState.player.deck.hand.length > 0; i++) {
+      const randomIndex = Math.floor(Math.random() * gameState.player.deck.hand.length);
+      const discardedCard = gameState.player.deck.hand[randomIndex];
+      
+      if (discardedCard) {
+        gameState.player.deck.hand.splice(randomIndex, 1);
+        gameState.player.deck.discardPile.push(discardedCard);
+        
+        console.log('[CombatSystem] _executeDiscardEffect: Discarded card', {
+          cardName: discardedCard.name,
+          remainingHandSize: gameState.player.deck.hand.length
+        });
+        
+        this.showCombatLog(`Discarded: ${discardedCard.name}`);
+      }
+    }
+
+    // Update UI to reflect discarded cards
+    this.eventEmitter.emit('cardsDiscarded', {
+      count: discardCount,
+      handSize: gameState.player.deck.hand.length,
+      source: card.name
+    });
+  }
+
+  /**
+   * Execute retain effect (Compile Time card)
+   * @param {Object} effect - Effect object
+   * @param {Card} card - Card being played
+   * @param {Object} gameState - Current game state
+   * @private
+   */
+  _executeRetainEffect(effect, card, gameState) {
+    const retainCount = effect.value || 1;
+
+    console.log('[CombatSystem] _executeRetainEffect: Applying retain to cards in hand', {
+      cardName: card.name,
+      retainCount: retainCount,
+      currentHandSize: gameState.player.deck.hand.length
+    });
+
+    if (gameState.player.deck.hand.length === 0) {
+      console.warn('[CombatSystem] _executeRetainEffect: Hand is empty, cannot retain');
+      this.showCombatLog('No cards to retain');
+      return;
+    }
+
+    // Auto-retain the rightmost card(s) in hand
+    let retainedCount = 0;
+    for (let i = gameState.player.deck.hand.length - 1; i >= 0 && retainedCount < retainCount; i--) {
+      const cardToRetain = gameState.player.deck.hand[i];
+      
+      if (cardToRetain && !cardToRetain.keywords.includes('retain')) {
+        cardToRetain.keywords.push('retain');
+        retainedCount++;
+        
+        console.log('[CombatSystem] _executeRetainEffect: Retained card', {
+          cardName: cardToRetain.name,
+          cardIndex: i,
+          totalRetained: retainedCount
+        });
+        
+        this.showCombatLog(`Retained: ${cardToRetain.name}`);
+      }
+    }
+
+    console.log('[CombatSystem] _executeRetainEffect: Retain complete', {
+      requested: retainCount,
+      actualRetained: retainedCount
+    });
+  }
+
+  _executeConditionalBlockEffect(effect, card, gameState) {
+    // ADAPTIVE FIREWALL: Check if defense card played this turn
+    if (effect.condition === 'defensePlayedThisTurn') {
+      // FIXED: Count total defense cards played this turn (including current card)
+      const defenseCardsPlayed = gameState.cardsPlayedThisTurn.filter(c => c.type === 'defense').length;
+      
+      // Trigger if this is the 2nd or later defense card
+      if (defenseCardsPlayed >= 2) {
+        const bonusBlock = effect.value || 0;
+        console.log('[CombatSystem] _executeConditionalBlockEffect: Condition met!', {
+          cardName: card.name,
+          condition: effect.condition,
+          bonusBlock,
+          defenseCardsPlayed: defenseCardsPlayed,
+          totalCardsPlayedThisTurn: gameState.cardsPlayedThisTurn.length
+        });
+        
+        this.showCombatLog(`Adaptive Firewall: +${bonusBlock} bonus Block!`);
+        this.gainBlock(bonusBlock, gameState.player, `card:${card.name}:conditional`);
+      } else {
+        console.log('[CombatSystem] _executeConditionalBlockEffect: Condition NOT met', {
+          cardName: card.name,
+          condition: effect.condition,
+          defenseCardsPlayed: defenseCardsPlayed,
+          requiredDefenseCards: 2,
+          defenseCardsPlayedNames: gameState.cardsPlayedThisTurn.filter(c => c.type === 'defense').map(c => c.name)
+        });
+      }
+    }
+  }
+
+  /**
+   * Show combat log message (helper for visual feedback)
+   * @param {string} message - Message to display
+   * @private
+   */
+  showCombatLog(message) {
+    if (this.eventEmitter && this.eventEmitter.emit) {
+      this.eventEmitter.emit('combatLog', { message });
+    }
+  }
+
   dealDamage(baseDamage, target, source, sourceDescription = 'unknown') {
     if (typeof baseDamage !== 'number' || baseDamage < 0) {
       console.error('[CombatSystem] dealDamage: Invalid baseDamage', {
@@ -845,6 +1091,24 @@ _executeTraceReductionEffect(effect, card, gameState) {
     }
 
     let finalDamage = baseDamage;
+    
+    if (source === this.gameState?.player) {
+      const relicEffects = source.getRelicEffects();
+      if (relicEffects.damageBonus > 0) {
+        finalDamage += relicEffects.damageBonus;
+        console.log('[CombatSystem] dealDamage: Exploit Amplifier bonus +', relicEffects.damageBonus);
+      }
+      
+      // DEMON PASSIVE: Adrenaline Spike - damage bonus at high trace
+      if (source.passiveAbility && source.passiveAbility.id === 'adrenaline_spike') {
+        const bonusDamage = source.passiveAbility.effect(finalDamage, this.gameState);
+        if (bonusDamage !== finalDamage) {
+          const bonus = bonusDamage - finalDamage;
+          console.log('[CombatSystem] dealDamage: Demon Adrenaline Spike +', bonus, 'damage');
+          finalDamage = bonusDamage;
+        }
+      }
+    }
 
     try {
       const sourceMultipliers = source.getStatusMultipliers();
@@ -916,11 +1180,43 @@ _executeTraceReductionEffect(effect, card, gameState) {
         const damageAfterBlock = Math.max(0, finalDamage - playerBlock);
         
         // Update block first - reduce by damage taken
+        // Update block first - reduce by damage taken
         target.block = Math.max(0, playerBlock - blockConsumed);
         
         // Apply ONLY the damage that penetrated block to trace
         if (damageAfterBlock > 0) {
           target.modifyTrace(damageAfterBlock, sourceDescription);
+        }
+        
+        // REFLECT DAMAGE: Trigger when player takes ANY unblocked damage
+        const reflectEffect = target.statusEffects.find(e => e.type === 'reflect');
+        if (reflectEffect && reflectEffect.stacks > 0 && source instanceof ICE && damageAfterBlock > 0) {
+          const reflectDamage = reflectEffect.stacks;
+          console.log('[CombatSystem] dealDamage: REFLECT DAMAGE TRIGGERED!', {
+            unblockedDamage: damageAfterBlock,
+            reflectStacks: reflectEffect.stacks,
+            reflectDamage,
+            reflectTarget: source.name
+          });
+          
+          this.showCombatLog(`Mirror Shield: Reflected ${reflectDamage} damage!`);
+          
+          // Deal reflect damage to attacker (pure damage, ignores block)
+          const actualReflectDamage = source.takeDamage(reflectDamage);
+          
+          console.log('[CombatSystem] dealDamage: Reflect damage dealt', {
+            intendedDamage: reflectDamage,
+            actualDamage: actualReflectDamage,
+            enemyHP: source.currentHP
+          });
+          
+          this.eventEmitter.emit('damageDealt', {
+            amount: actualReflectDamage,
+            target: 'enemy',
+            source: 'reflect',
+            targetHP: source.currentHP,
+            targetMaxHP: source.maxHP
+          });
         }
         
         actualDamage = damageAfterBlock;
@@ -1007,12 +1303,29 @@ _executeTraceReductionEffect(effect, card, gameState) {
     });
 
     let finalBlock = baseBlock;
+    
+    if (target === this.gameState?.player) {
+      const relicEffects = target.getRelicEffects();
+      if (relicEffects.blockBonus > 0) {
+        finalBlock += relicEffects.blockBonus;
+        console.log('[CombatSystem] gainBlock: Defense Matrix bonus +', relicEffects.blockBonus);
+      }
+    }
 
     try {
       const targetMultipliers = target.getStatusMultipliers();
 
-      finalBlock += targetMultipliers.dexterityBonus;
+      // CRITICAL FIX: Apply dexterity bonus to ALL block gains
+      if (targetMultipliers.dexterityBonus > 0) {
+        finalBlock += targetMultipliers.dexterityBonus;
+        console.log('[CombatSystem] gainBlock: Dexterity bonus +', targetMultipliers.dexterityBonus);
+      }
 
+      // Apply frail debuff (reduces block)
+      if (targetMultipliers.blockMultiplier < 1.0) {
+        console.log('[CombatSystem] gainBlock: Frail debuff active, multiplier', targetMultipliers.blockMultiplier);
+      }
+      
       finalBlock = Math.floor(finalBlock * targetMultipliers.blockMultiplier);
 
       console.log('[CombatSystem] gainBlock: After modifiers', {
@@ -1068,14 +1381,16 @@ _executeTraceReductionEffect(effect, card, gameState) {
     return actualBlock;
   }
 
-  applyStatus(type, stacks, duration, target, sourceDescription = 'unknown') {
+applyStatus(type, stacks, duration, target, sourceDescription = 'unknown') {
     if (!type || typeof type !== 'string') {
       console.error('[CombatSystem] applyStatus: Invalid type', {
         type,
         typeOf: typeof type
       });
       return false;
-    }if (typeof stacks !== 'number' || stacks < 1) {
+    }
+
+    if (typeof stacks !== 'number' || stacks < 1) {
       console.error('[CombatSystem] applyStatus: Invalid stacks', {
         stacks,
         type: typeof stacks
@@ -1095,6 +1410,34 @@ _executeTraceReductionEffect(effect, card, gameState) {
       target: target.name || target.id,
       sourceDescription
     });
+
+    // CRITICAL FIX: Artifact blocks debuffs
+    const isDebuff = ['weak', 'vulnerable', 'frail', 'poison', 'burn'].includes(type);
+    if (isDebuff && target.statusEffects) {
+      const artifactEffect = target.statusEffects.find(e => e.type === 'artifact');
+      if (artifactEffect && artifactEffect.stacks > 0) {
+        console.log('[CombatSystem] applyStatus: ARTIFACT BLOCKED DEBUFF!', {
+          blockedDebuff: type,
+          artifactStacks: artifactEffect.stacks
+        });
+        
+        this.showCombatLog(`Artifact blocked ${type}!`);
+        
+        // Consume 1 artifact stack
+        artifactEffect.stacks -= 1;
+        if (artifactEffect.stacks <= 0) {
+          target.statusEffects = target.statusEffects.filter(e => e.type !== 'artifact');
+          console.log('[CombatSystem] applyStatus: Artifact consumed');
+        }
+        
+        this.eventEmitter.emit('artifactTriggered', {
+          blockedDebuff: type,
+          target: target.name || target.id
+        });
+        
+        return false; // Debuff blocked, do not apply
+      }
+    }
 
     try {
       const success = target.applyStatusEffect(type, stacks, duration);

@@ -218,7 +218,8 @@ export const EVENT_LIBRARY = {
           removeCard: null,
           upgradeRandomCard: false,
           gainRelic: null,
-          healTrace: null
+          healTrace: null,
+          gainIntel: 'intel_memory_fragment'
         },
         resultText: "The memories flood into your consciousness - fractured images of corporate boardrooms, whispered conspiracies, and hidden server locations. Your trace signature spikes from the neural interface."
       },
@@ -442,7 +443,8 @@ export const EVENT_LIBRARY = {
           removeCard: "random",
           upgradeRandomCard: false,
           gainRelic: null,
-          healTrace: null
+          healTrace: null,
+          gainIntel: 'intel_encrypted_message'
         },
         resultText: "You dedicate significant processing power to crack the encryption. One of your programs is corrupted and lost in the process, but the intel you gained is priceless."
       },
@@ -649,7 +651,687 @@ export const EVENT_LIBRARY = {
     ],
     encounterRate: 0.7,
     tier: 2
-  }
+  },
+
+  // NEW INTEL EVENTS (18 more intel pieces)
+  event_exec_files: {
+    id: "event_exec_files",
+    title: "Executive Files",
+    description: "You've breached a senior executive's personal files. Calendars, meeting notes, strategic plans - this is gold. But downloading it all will leave massive traces.",
+    flavorText: "CEO calendar shows: 'Project Darknet - Final Phase Meeting'",
+    choices: [
+      {
+        text: "Download Everything (+Intel, +4 Trace)",
+        consequences: {
+          credits: null,
+          trace: 4,
+          addCard: null,
+          removeCard: null,
+          upgradeRandomCard: false,
+          gainRelic: null,
+          healTrace: null,
+          gainIntel: 'intel_exec_calendar'
+        },
+        resultText: "You grab everything and bolt. The intel is priceless, but corporate security is definitely investigating now."
+      },
+      {
+        text: "Skip It",
+        consequences: {
+          credits: null,
+          trace: null,
+          addCard: null,
+          removeCard: null,
+          upgradeRandomCard: false,
+          gainRelic: null,
+          healTrace: null
+        },
+        resultText: "You back out quietly. Some files aren't worth the heat."
+      }
+    ],
+    encounterRate: 0.5,
+    tier: 2
+  },
+
+  event_server_logs: {
+    id: "event_server_logs",
+    title: "Server Logs",
+    description: "Hidden server logs reveal access patterns to a classified project. Someone's been using unauthorized backdoors.",
+    flavorText: "Repeated logins from IP: [UNKNOWN]. Access level: ROOT.",
+    choices: [
+      {
+        text: "Analyze Logs (+Intel, Remove Random Card)",
+        consequences: {
+          credits: null,
+          trace: null,
+          addCard: null,
+          removeCard: "random",
+          upgradeRandomCard: false,
+          gainRelic: null,
+          healTrace: null,
+          gainIntel: 'intel_backdoor_location'
+        },
+        resultText: "You dedicate processing power to decrypt the logs. One program crashes, but you've learned the location of a hidden backdoor."
+      },
+      {
+        text: "Ignore",
+        consequences: {
+          credits: null,
+          trace: null,
+          addCard: null,
+          removeCard: null,
+          upgradeRandomCard: false,
+          gainRelic: null,
+          healTrace: null
+        },
+        resultText: "You leave the logs alone and move on."
+      }
+    ],
+    encounterRate: 0.6,
+    tier: 3
+  },
+
+  event_whistleblower: {
+    id: "event_whistleblower",
+    title: "Whistleblower Contact",
+    description: "An anonymous corporate insider offers you classified information in exchange for keeping their identity secret. They want to expose illegal programs.",
+    flavorText: "\"I've been documenting everything. Help me get this out.\"",
+    choices: [
+      {
+        text: "Accept Intel (+Intel, +50 Credits)",
+        consequences: {
+          credits: 50,
+          trace: null,
+          addCard: null,
+          removeCard: null,
+          upgradeRandomCard: false,
+          gainRelic: null,
+          healTrace: null,
+          gainIntel: 'intel_corporate_secrets'
+        },
+        resultText: "You receive encrypted files exposing corporate malfeasance. The whistleblower transfers payment and disappears."
+      },
+      {
+        text: "Decline",
+        consequences: {
+          credits: null,
+          trace: null,
+          addCard: null,
+          removeCard: null,
+          upgradeRandomCard: false,
+          gainRelic: null,
+          healTrace: null
+        },
+        resultText: "You refuse to get involved. The whistleblower disconnects, disappointed."
+      }
+    ],
+    encounterRate: 0.4,
+    tier: 2
+  },
+
+  event_research_notes: {
+    id: "event_research_notes",
+    title: "Research Notes",
+    description: "You've accessed a researcher's private notes on experimental ICE development. The notes mention vulnerabilities in current security protocols.",
+    flavorText: "Note: 'Firewall v4.2 has critical flaw in packet validation...'",
+    choices: [
+      {
+        text: "Study Notes (+Intel, Upgrade Random Card)",
+        consequences: {
+          credits: null,
+          trace: null,
+          addCard: null,
+          removeCard: null,
+          upgradeRandomCard: true,
+          gainRelic: null,
+          healTrace: null,
+          gainIntel: 'intel_ice_weakness'
+        },
+        resultText: "You study the research and apply it to your code. One of your programs is now optimized against corporate ICE."
+      },
+      {
+        text: "Skip",
+        consequences: {
+          credits: null,
+          trace: null,
+          addCard: null,
+          removeCard: null,
+          upgradeRandomCard: false,
+          gainRelic: null,
+          healTrace: null
+        },
+        resultText: "You leave the research notes alone."
+      }
+    ],
+    encounterRate: 0.65,
+    tier: 1
+  },
+
+  event_financial_records: {
+    id: "event_financial_records",
+    title: "Financial Records",
+    description: "You've found hidden financial records showing illegal fund transfers. This data could be valuable to corporate rivals - or used for blackmail.",
+    flavorText: "Transaction: $50M to [REDACTED] - Purpose: [CLASSIFIED]",
+    choices: [
+      {
+        text: "Copy Records (+Intel, +80 Credits)",
+        consequences: {
+          credits: 80,
+          trace: null,
+          addCard: null,
+          removeCard: null,
+          upgradeRandomCard: false,
+          gainRelic: null,
+          healTrace: null,
+          gainIntel: 'intel_financial_fraud'
+        },
+        resultText: "You copy the records and sell them to interested parties. The credits flow in immediately."
+      },
+      {
+        text: "Leave Alone",
+        consequences: {
+          credits: null,
+          trace: null,
+          addCard: null,
+          removeCard: null,
+          upgradeRandomCard: false,
+          gainRelic: null,
+          healTrace: null
+        },
+        resultText: "You decide not to get involved in corporate politics."
+      }
+    ],
+    encounterRate: 0.55,
+    tier: 3
+  },
+
+  event_security_memo: {
+    id: "event_security_memo",
+    title: "Security Memo",
+    description: "An internal security memo warns about 'increased runner activity in Sector 7'. They're onto you - or at least, onto someone.",
+    flavorText: "ALERT: Unauthorized access attempts detected. Increase ICE patrols.",
+    choices: [
+      {
+        text: "Read Carefully (+Intel, +2 Trace)",
+        consequences: {
+          credits: null,
+          trace: 2,
+          addCard: null,
+          removeCard: null,
+          upgradeRandomCard: false,
+          gainRelic: null,
+          healTrace: null,
+          gainIntel: 'intel_security_patterns'
+        },
+        resultText: "You memorize their patrol patterns and security protocols. You'll be better prepared next time."
+      },
+      {
+        text: "Ignore It",
+        consequences: {
+          credits: null,
+          trace: null,
+          addCard: null,
+          removeCard: null,
+          upgradeRandomCard: false,
+          gainRelic: null,
+          healTrace: null
+        },
+        resultText: "You delete the memo and move on."
+      }
+    ],
+    encounterRate: 0.7,
+    tier: 1
+  },
+
+  event_ai_research: {
+    id: "event_ai_research",
+    title: "AI Research Data",
+    description: "Classified AI research files detail experimental neural networks. This technology is years ahead of anything public.",
+    flavorText: "Project Athena: Autonomous defense AI - TESTING PHASE",
+    choices: [
+      {
+        text: "Download Research (+Intel, Add Rare Card)",
+        consequences: {
+          credits: null,
+          trace: null,
+          addCard: "utility_rare_001",
+          removeCard: null,
+          upgradeRandomCard: false,
+          gainRelic: null,
+          healTrace: null,
+          gainIntel: 'intel_ai_research'
+        },
+        resultText: "You absorb the research and develop a cutting-edge utility based on their neural network algorithms."
+      },
+      {
+        text: "Skip",
+        consequences: {
+          credits: null,
+          trace: null,
+          addCard: null,
+          removeCard: null,
+          upgradeRandomCard: false,
+          gainRelic: null,
+          healTrace: null
+        },
+        resultText: "You leave the AI research untouched."
+      }
+    ],
+    encounterRate: 0.45,
+    tier: 3
+  },
+
+  event_employee_database: {
+    id: "event_employee_database",
+    title: "Employee Database",
+    description: "Complete employee records with security clearances, access codes, and personal data. A treasure trove for social engineering.",
+    flavorText: "12,847 employees. 482 with ROOT access.",
+    choices: [
+      {
+        text: "Extract Data (+Intel, +60 Credits)",
+        consequences: {
+          credits: 60,
+          trace: null,
+          addCard: null,
+          removeCard: null,
+          upgradeRandomCard: false,
+          gainRelic: null,
+          healTrace: null,
+          gainIntel: 'intel_employee_access'
+        },
+        resultText: "You download key employee credentials and sell them on the darknet. Instant payday."
+      },
+      {
+        text: "Leave It",
+        consequences: {
+          credits: null,
+          trace: null,
+          addCard: null,
+          removeCard: null,
+          upgradeRandomCard: false,
+          gainRelic: null,
+          healTrace: null
+        },
+        resultText: "You exit without touching the employee database."
+      }
+    ],
+    encounterRate: 0.6,
+    tier: 2
+  },
+
+  event_network_topology: {
+    id: "event_network_topology",
+    title: "Network Map",
+    description: "A complete network topology map showing all server locations, connections, and weak points. Perfect for planning future runs.",
+    flavorText: "Node connections: 1,247. Identified vulnerabilities: 18.",
+    choices: [
+      {
+        text: "Memorize Map (+Intel, Heal 4 Trace)",
+        consequences: {
+          credits: null,
+          trace: null,
+          addCard: null,
+          removeCard: null,
+          upgradeRandomCard: false,
+          gainRelic: null,
+          healTrace: 4,
+          gainIntel: 'intel_network_map'
+        },
+        resultText: "You commit the network topology to memory. Knowing the layout lets you navigate more efficiently."
+      },
+      {
+        text: "Skip",
+        consequences: {
+          credits: null,
+          trace: null,
+          addCard: null,
+          removeCard: null,
+          upgradeRandomCard: false,
+          gainRelic: null,
+          healTrace: null
+        },
+        resultText: "You leave the map alone and continue."
+      }
+    ],
+    encounterRate: 0.5,
+    tier: 2
+  },
+
+  event_prototype_code: {
+    id: "event_prototype_code",
+    title: "Prototype Code",
+    description: "Unfinished prototype code for next-generation security systems. It's buggy but contains revolutionary algorithms.",
+    flavorText: "Version: 0.3-alpha. Status: UNSTABLE. DO NOT DEPLOY.",
+    choices: [
+      {
+        text: "Analyze Code (+Intel, Upgrade 2 Cards)",
+        consequences: {
+          credits: null,
+          trace: null,
+          addCard: null,
+          removeCard: null,
+          upgradeRandomCard: true,
+          gainRelic: null,
+          healTrace: null,
+          gainIntel: 'intel_prototype_algorithms'
+        },
+        resultText: "You reverse-engineer the prototype and apply its algorithms to your own code. Two programs are significantly enhanced."
+      },
+      {
+        text: "Ignore",
+        consequences: {
+          credits: null,
+          trace: null,
+          addCard: null,
+          removeCard: null,
+          upgradeRandomCard: false,
+          gainRelic: null,
+          healTrace: null
+        },
+        resultText: "You leave the unstable prototype alone."
+      }
+    ],
+    encounterRate: 0.55,
+    tier: 3
+  },
+
+  event_blackmail_files: {
+    id: "event_blackmail_files",
+    title: "Blackmail Files",
+    description: "Someone in corporate security has been collecting dirt on executives. Scandals, affairs, embezzlement - it's all here.",
+    flavorText: "File: 'Executive_Compromises.enc' - 847 MB",
+    choices: [
+      {
+        text: "Download Files (+Intel, +100 Credits, +5 Trace)",
+        consequences: {
+          credits: 100,
+          trace: 5,
+          addCard: null,
+          removeCard: null,
+          upgradeRandomCard: false,
+          gainRelic: null,
+          healTrace: null,
+          gainIntel: 'intel_blackmail_data'
+        },
+        resultText: "You copy everything and immediately auction it. The buyers pay top credit, but corporate security is furious."
+      },
+      {
+        text: "Leave It",
+        consequences: {
+          credits: null,
+          trace: null,
+          addCard: null,
+          removeCard: null,
+          upgradeRandomCard: false,
+          gainRelic: null,
+          healTrace: null
+        },
+        resultText: "You refuse to touch the blackmail files. Too messy."
+      }
+    ],
+    encounterRate: 0.4,
+    tier: 3
+  },
+
+  event_audit_logs: {
+    id: "event_audit_logs",
+    title: "Audit Logs",
+    description: "Forensic audit logs showing every transaction, every access, every keystroke. Perfect for understanding how their security works.",
+    flavorText: "Log entries: 2.4 million. Time range: 90 days.",
+    choices: [
+      {
+        text: "Process Logs (+Intel, Remove Card, Add Rare Card)",
+        consequences: {
+          credits: null,
+          trace: null,
+          addCard: "defense_rare_001",
+          removeCard: "random",
+          upgradeRandomCard: false,
+          gain8:15,
+          AMRelic: null,
+healTrace: null,
+gainIntel: 'intel_audit_trails'
+},
+resultText: "You burn through processing power analyzing the logs. One program corrupts, but you've developed a powerful defensive protocol based on their audit patterns."
+},
+{
+text: "Skip",
+consequences: {
+credits: null,
+trace: null,
+addCard: null,
+removeCard: null,
+upgradeRandomCard: false,
+gainRelic: null,
+healTrace: null
+},
+resultText: "You leave the audit logs alone."
+}
+],
+encounterRate: 0.5,
+tier: 2
+},
+event_disaster_recovery: {
+id: "event_disaster_recovery",
+title: "Disaster Recovery Plan",
+description: "Corporate disaster recovery documentation reveals their backup systems, failover procedures, and emergency protocols.",
+flavorText: "In case of catastrophic failure: ALL SYSTEMS ROUTE TO BACKUP_SITE_DELTA",
+choices: [
+{
+text: "Study Plan (+Intel, Heal 6 Trace)",
+consequences: {
+credits: null,
+trace: null,
+addCard: null,
+removeCard: null,
+upgradeRandomCard: false,
+gainRelic: null,
+healTrace: 6,
+gainIntel: 'intel_recovery_protocols'
+},
+resultText: "Understanding their recovery procedures helps you cover your tracks better. Your trace signature is cleaned significantly."
+},
+{
+text: "Ignore",
+consequences: {
+credits: null,
+trace: null,
+addCard: null,
+removeCard: null,
+upgradeRandomCard: false,
+gainRelic: null,
+healTrace: null
+},
+resultText: "You skip the disaster recovery documentation."
+}
+],
+encounterRate: 0.65,
+tier: 1
+},
+event_beta_software: {
+id: "event_beta_software",
+title: "Beta Software",
+description: "Unreleased beta software for corporate tools. Untested, potentially buggy, but cutting-edge.",
+flavorText: "WARNING: For internal testing only. May contain critical bugs.",
+choices: [
+{
+text: "Install Beta (+Intel, Add Uncommon Card, +3 Trace)",
+consequences: {
+credits: null,
+trace: 3,
+addCard: "utility_uncommon_004",
+removeCard: null,
+upgradeRandomCard: false,
+gainRelic: null,
+healTrace: null,
+gainIntel: 'intel_beta_tools'
+},
+resultText: "You risk installing the unstable beta. It works - mostly - and gives you access to advanced features. But the installation left traces."
+},
+{
+text: "Skip",
+consequences: {
+credits: null,
+trace: null,
+addCard: null,
+removeCard: null,
+upgradeRandomCard: false,
+gainRelic: null,
+healTrace: null
+},
+resultText: "You decide beta software is too risky."
+}
+],
+encounterRate: 0.6,
+tier: 2
+},
+event_incident_reports: {
+id: "event_incident_reports",
+title: "Incident Reports",
+description: "Security incident reports documenting previous breaches, vulnerabilities exploited, and lessons learned. They're learning from past mistakes.",
+flavorText: "INCIDENT-2077: Unauthorized access via deprecated API. FIXED.",
+choices: [
+{
+text: "Read Reports (+Intel, +40 Credits)",
+consequences: {
+credits: 40,
+trace: null,
+addCard: null,
+removeCard: null,
+upgradeRandomCard: false,
+gainRelic: null,
+healTrace: null,
+gainIntel: 'intel_incident_history'
+},
+resultText: "You learn from their past failures and sell the vulnerability intel to interested parties."
+},
+{
+text: "Skip",
+consequences: {
+credits: null,
+trace: null,
+addCard: null,
+removeCard: null,
+upgradeRandomCard: false,
+gainRelic: null,
+healTrace: null
+},
+resultText: "You leave the incident reports alone."
+}
+],
+encounterRate: 0.7,
+tier: 1
+},
+event_vpn_configs: {
+id: "event_vpn_configs",
+title: "VPN Configurations",
+description: "Complete VPN configuration files for corporate remote access. With these, you could impersonate legitimate users.",
+flavorText: "Active VPN tunnels: 847. Remote users: 2,104.",
+choices: [
+{
+text: "Copy Configs (+Intel, Add Exploit Card)",
+consequences: {
+credits: null,
+trace: null,
+addCard: "exploit_uncommon_003",
+removeCard: null,
+upgradeRandomCard: false,
+gainRelic: null,
+healTrace: null,
+gainIntel: 'intel_vpn_access'
+},
+resultText: "You clone the VPN configurations and develop an exploit to impersonate authorized users."
+},
+{
+text: "Skip",
+consequences: {
+credits: null,
+trace: null,
+addCard: null,
+removeCard: null,
+upgradeRandomCard: false,
+gainRelic: null,
+healTrace: null
+},
+resultText: "You leave the VPN configs alone."
+}
+],
+encounterRate: 0.55,
+tier: 2
+},
+event_quantum_research: {
+id: "event_quantum_research",
+title: "Quantum Research",
+description: "Top-secret quantum computing research. This technology could revolutionize hacking - or make it obsolete.",
+flavorText: "Project Q: Quantum decryption prototype - 98% success rate",
+choices: [
+{
+text: "Study Research (+Intel, Upgrade 3 Cards, Remove 1 Card)",
+consequences: {
+credits: null,
+trace: null,
+addCard: null,
+removeCard: "random",
+upgradeRandomCard: true,
+gainRelic: null,
+healTrace: null,
+gainIntel: 'intel_quantum_tech'
+},
+resultText: "You absorb the quantum research and apply it to your code. Three programs are revolutionized, though one incompatible program had to be deleted."
+},
+{
+text: "Skip",
+consequences: {
+credits: null,
+trace: null,
+addCard: null,
+removeCard: null,
+upgradeRandomCard: false,
+gainRelic: null,
+healTrace: null
+},
+resultText: "You leave the quantum research alone."
+}
+],
+encounterRate: 0.35,
+tier: 3
+},
+event_ceo_emails: {
+id: "event_ceo_emails",
+title: "CEO Emails",
+description: "The CEO's personal email archive. Mergers, acquisitions, strategic plans - everything that matters.",
+flavorText: "Subject: Re: Project Shadowrun - EYES ONLY",
+choices: [
+{
+text: "Download All (+Intel, +120 Credits, +6 Trace)",
+consequences: {
+credits: 120,
+trace: 6,
+addCard: null,
+removeCard: null,
+upgradeRandomCard: false,
+gainRelic: null,
+healTrace: null,
+gainIntel: 'intel_ceo_communications'
+},
+resultText: "You grab everything and immediately sell it to corporate rivals. The payout is massive, but so is the heat."
+},
+{
+text: "Skip",
+consequences: {
+credits: null,
+trace: null,
+addCard: null,
+removeCard: null,
+upgradeRandomCard: false,
+gainRelic: null,
+healTrace: null
+},
+resultText: "You decide the CEO's emails are too hot to touch."
+}
+],
+encounterRate: 0.3,
+tier: 3
+}
 };
 
 console.log('[eventDefinitions.js] Validating event library...');

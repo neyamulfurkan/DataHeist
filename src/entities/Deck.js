@@ -217,67 +217,54 @@ export default class Deck {
    * @returns {number} Number of cards discarded
    */
   discardHand() {
-    console.log('[Deck] discardHand: Discarding hand of', this.hand.length, 'cards');
+    console.log('[Deck] discardHand: Discarding hand (keeping retained cards)');
 
-    if (this.hand.length === 0) {
-      console.log('[Deck] discardHand: Hand is empty, nothing to discard');
+    if (!Array.isArray(this.hand)) {
+      console.error('[Deck] discardHand: Hand is not an array:', this.hand);
       return 0;
     }
 
-    let discardedCount = 0;
+    if (this.hand.length === 0) {
+      console.log('[Deck] discardHand: Hand is already empty');
+      return 0;
+    }
+
+    const originalHandSize = this.hand.length;
+    const cardsToDiscard = [];
+    const retainedCards = [];
     
-    // Process cards from end to start to avoid index issues
-    while (this.hand.length > 0) {
-      const card = this.hand[this.hand.length - 1];
-
-      if (!card) {
-        console.error('[Deck] discardHand: Null card found in hand');
-        this.hand.pop();
-        continue;
-      }
-
-      // Check for Retain keyword - keep in hand
+    // Separate cards into discard and retained
+    this.hand.forEach(card => {
       if (card.keywords && card.keywords.includes('retain')) {
-        console.log('[Deck] discardHand: Retaining card', card.name, '(has Retain keyword)');
-        // Move to front so we don't process it again
-        const retainedCard = this.hand.pop();
-        this.hand.unshift(retainedCard);
-        break; // All remaining cards should be retained
+        retainedCards.push(card);
+        console.log('[Deck] discardHand: Retaining card:', card.name);
+      } else if (card.isEthereal) {
+        // Ethereal cards are discarded even if not played
+        cardsToDiscard.push(card);
+        console.log('[Deck] discardHand: Ethereal card discarded:', card.name);
+      } else {
+        cardsToDiscard.push(card);
       }
-
-      // Remove from hand first
-      this.hand.pop();
-
-      // Check if Ethereal - goes to exhaust
+    });
+    
+    // Move discarded cards to appropriate piles
+    cardsToDiscard.forEach(card => {
       if (card.isEthereal) {
-        console.log('[Deck] discardHand: Exhausting Ethereal card', card.name);
         this.exhaustPile.push(card);
         this.stats.totalCardsExhausted++;
       } else {
-        // Normal discard
         this.discardPile.push(card);
         this.stats.totalCardsDiscarded++;
-        console.log('[Deck] discardHand: Discarded', card.name);
       }
-      
-      discardedCount++;
-    }
+    });
+    
+    // Keep only retained cards in hand
+    this.hand = retainedCards;
 
-        console.log('[Deck] discardHand: Discarded', discardedCount, 'cards, hand size now', this.hand.length);
+    console.log('[Deck] discardHand: Discarded', cardsToDiscard.length, 'cards, retained', retainedCards.length);
     console.log('[Deck] discardHand: Piles -', 'draw:', this.drawPile.length, 'hand:', this.hand.length, 'discard:', this.discardPile.length, 'exhaust:', this.exhaustPile.length);
 
-    // CRITICAL DEBUG: Log what's still in hand
-    if (this.hand.length > 0) {
-      console.error('[Deck] discardHand: CARDS STILL IN HAND AFTER DISCARD:', 
-        this.hand.map(c => ({ 
-          name: c.name, 
-          keywords: c.keywords,
-          isEthereal: c.isEthereal 
-        }))
-      );
-    }
-
-    return discardedCount;
+    return cardsToDiscard.length;
   }
 
 

@@ -155,6 +155,7 @@ export default class Runner {
     };
     
     this.statusEffects = [];
+    this.relics = [];
     
     this.spriteKey = data.spriteKey || 'runner_placeholder';
     this.unlocked = data.unlocked !== undefined ? data.unlocked : true;
@@ -724,6 +725,73 @@ export default class Runner {
   }
 
   /**
+   * Add a relic to the runner
+   * @param {Object} relic - Relic to add
+   * @returns {boolean} True if successfully added
+   */
+  addRelic(relic) {
+    if (!relic || !relic.id) {
+      console.error('[Runner] addRelic: Invalid relic:', relic);
+      return false;
+    }
+    
+    if (this.relics.some(r => r.id === relic.id)) {
+      console.warn('[Runner] addRelic: Relic already owned:', relic.id);
+      return false;
+    }
+    
+    this.relics.push(relic);
+    console.log('[Runner] addRelic: Relic added:', relic.name);
+    
+    return true;
+  }
+  
+  /**
+   * Check if runner has a specific relic
+   * @param {string} relicId - Relic ID to check
+   * @returns {boolean} True if relic is owned
+   */
+  hasRelic(relicId) {
+    return this.relics.some(r => r.id === relicId);
+  }
+  
+  /**
+   * Get cumulative effects from all relics
+   * @returns {Object} Effect values from all relics
+   */
+  getRelicEffects() {
+    const effects = {
+      traceReductionPerTurn: 0,
+      bonusStartingCPU: 0,
+      maxTraceIncrease: 0,
+      damageBonus: 0,
+      blockBonus: 0
+    };
+    
+    this.relics.forEach(relic => {
+      switch(relic.id) {
+        case 'relic_stealth_module':
+          effects.traceReductionPerTurn += 1;
+          break;
+        case 'relic_cpu_optimizer':
+          effects.bonusStartingCPU += 1;
+          break;
+        case 'relic_trace_buffer':
+          effects.maxTraceIncrease += 20;
+          break;
+        case 'relic_exploit_amplifier':
+          effects.damageBonus += 1;
+          break;
+        case 'relic_defense_matrix':
+          effects.blockBonus += 2;
+          break;
+      }
+    });
+    
+    return effects;
+  }
+
+  /**
    * Serialize runner to JSON for saving
    * @returns {Object} Serialized runner data
    */
@@ -741,6 +809,7 @@ export default class Runner {
         duration: e.duration,
         icon: e.icon
       })),
+      relics: this.relics,
       deck: this.deck.toJSON(),
       stats: { ...this.stats }
     };
@@ -784,6 +853,10 @@ export default class Runner {
           duration: e.duration,
           icon: e.icon || `icon_${e.type}`
         }));
+      }
+
+      if (Array.isArray(json.relics)) {
+        runner.relics = json.relics;
       }
 
       if (json.deck) {
