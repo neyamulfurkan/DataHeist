@@ -1318,6 +1318,154 @@ export function animateStatusEffect(scene, x, y, statusType) {
 
   return animateParticleExplosion(scene, x, y, color, 15);
 }
+
+/**
+ * Create enemy search/scan animation
+ * @param {Phaser.Scene} scene - Phaser scene instance
+ * @param {Phaser.GameObjects.Sprite} enemySprite - Enemy sprite to animate
+ * @param {number} intensity - Search intensity (0-1)
+ * @returns {Promise<void>}
+ */
+export function animateEnemySearch(scene, enemySprite, intensity = 0.5) {
+  if (!validateAnimationTarget(scene, enemySprite, 'animateEnemySearch')) {
+    return Promise.reject(new Error('Invalid animation target'));
+  }
+
+  console.log('[AnimationHelpers] animateEnemySearch: Starting search animation', { intensity });
+
+  return new Promise((resolve) => {
+    const originalX = enemySprite.x;
+    const searchDistance = 30 * intensity;
+    
+    // Create scanning particle effect
+    for (let i = 0; i < 5; i++) {
+      const particle = scene.add.circle(
+        enemySprite.x,
+        enemySprite.y,
+        3,
+        0x00f0ff,
+        0.6
+      );
+      particle.setDepth(GAME_CONFIG.UI.Z_INDEX.HUD);
+      
+      scene.tweens.add({
+        targets: particle,
+        x: enemySprite.x + (Math.random() - 0.5) * 200,
+        y: enemySprite.y + (Math.random() - 0.5) * 100,
+        alpha: 0,
+        duration: 800,
+        onComplete: () => particle.destroy()
+      });
+    }
+    
+    // Horizontal search sweep
+    scene.tweens.add({
+      targets: enemySprite,
+      x: originalX + searchDistance,
+      duration: 400,
+      ease: 'Sine.InOut',
+      yoyo: true,
+      repeat: 1,
+      onComplete: () => {
+        enemySprite.x = originalX;
+        resolve();
+      }
+    });
+  });
+}
+
+/**
+ * Create enemy alert animation (when trace threshold crossed)
+ * @param {Phaser.Scene} scene - Phaser scene instance
+ * @param {Phaser.GameObjects.Sprite} enemySprite - Enemy sprite to animate
+ * @param {string} alertLevel - 'low', 'medium', 'high', 'critical'
+ * @returns {Promise<void>}
+ */
+export function animateEnemyAlert(scene, enemySprite, alertLevel = 'low') {
+  if (!validateAnimationTarget(scene, enemySprite, 'animateEnemyAlert')) {
+    return Promise.reject(new Error('Invalid animation target'));
+  }
+
+  console.log('[AnimationHelpers] animateEnemyAlert: Alert animation', { alertLevel });
+
+  const colors = {
+    low: 0xffcc00,
+    medium: 0xff9900,
+    high: 0xff0055,
+    critical: 0xff0000
+  };
+
+  const color = colors[alertLevel] || colors.low;
+  const pulseCount = alertLevel === 'critical' ? 3 : alertLevel === 'high' ? 2 : 1;
+
+  return new Promise((resolve) => {
+    // Create alert ring
+    const alertRing = scene.add.circle(
+      enemySprite.x,
+      enemySprite.y,
+      50,
+      color,
+      0
+    );
+    alertRing.setStrokeStyle(4, color, 0.8);
+    alertRing.setDepth(GAME_CONFIG.UI.Z_INDEX.HUD);
+
+    scene.tweens.add({
+      targets: alertRing,
+      scaleX: 2.5,
+      scaleY: 2.5,
+      alpha: 0,
+      duration: 600,
+      ease: 'Power2',
+      repeat: pulseCount - 1,
+      onComplete: () => {
+        alertRing.destroy();
+        resolve();
+      }
+    });
+
+    // Flash enemy sprite
+    animateImpactFlash(scene, enemySprite, color, 200).catch(err => console.error(err));
+  });
+}
+
+/**
+ * Create enemy victory celebration animation
+ * @param {Phaser.Scene} scene - Phaser scene instance
+ * @param {Phaser.GameObjects.Sprite} enemySprite - Enemy sprite to animate
+ * @returns {Promise<void>}
+ */
+export function animateEnemyVictory(scene, enemySprite) {
+  if (!validateAnimationTarget(scene, enemySprite, 'animateEnemyVictory')) {
+    return Promise.reject(new Error('Invalid animation target'));
+  }
+
+  console.log('[AnimationHelpers] animateEnemyVictory: Victory animation');
+
+  return new Promise((resolve) => {
+    const originalY = enemySprite.y;
+    
+    // Bounce celebration
+    scene.tweens.add({
+      targets: enemySprite,
+      y: originalY - 30,
+      scaleX: 1.2,
+      scaleY: 0.9,
+      duration: 200,
+      ease: 'Power2',
+      yoyo: true,
+      repeat: 2,
+      onComplete: () => {
+        enemySprite.y = originalY;
+        enemySprite.setScale(1.0);
+        resolve();
+      }
+    });
+
+    // Victory particles
+    animateParticleExplosion(scene, enemySprite.x, enemySprite.y, 0xff0055, 20).catch(err => console.error(err));
+  });
+}
 // ============================================================================
 // MODULE CLEANUP AND EXPORT
 // ============================================================================

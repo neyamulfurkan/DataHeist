@@ -37,7 +37,10 @@ import {
   animateEnergyBeam,
   animateImpactFlash,
   animateShieldEffect,
-  animateStatusEffect
+  animateStatusEffect,
+  animateEnemySearch,
+  animateEnemyAlert,
+  animateEnemyVictory
 } from '../utils/AnimationHelpers.js';
 import rewardSystem from '../systems/RewardSystem.js';
 
@@ -80,8 +83,9 @@ export default class BattleScene extends Phaser.Scene {
     this.playerBlockText = null;
     this.enemyBlockText = null;
     this.enemyIdleTween = null;
+    this.lastTracePercent = 0;
     
-    console.log('[BattleScene] Constructor: Scene initialized');
+    
   }
 
   /**
@@ -352,17 +356,25 @@ export default class BattleScene extends Phaser.Scene {
 
     const originalY = this.enemySprite.y;
 
-    // FIXED: Slightly more visible float - still subtle
+    // DYNAMIC: Idle intensity based on enemy HP
+    const hpPercent = this.enemy.currentHP / this.enemy.maxHP;
+    const floatDistance = 4 + (6 * (1 - hpPercent)); // 4-10px based on damage
+    const duration = 3000 - (1000 * (1 - hpPercent)); // Faster when damaged
+
     this.enemyIdleTween = this.tweens.add({
       targets: this.enemySprite,
-      y: originalY - 4,
-      duration: 3000,
+      y: originalY - floatDistance,
+      duration: Math.max(duration, 1500),
       ease: 'Sine.InOut',
       yoyo: true,
       repeat: -1
     });
 
-    console.log('[BattleScene] startEnemyIdleAnimation: Idle animation started');
+    console.log('[BattleScene] startEnemyIdleAnimation: Dynamic idle animation started', {
+      hpPercent: (hpPercent * 100).toFixed(1) + '%',
+      floatDistance,
+      duration
+    });
   }
 
   /**
@@ -599,7 +611,20 @@ export default class BattleScene extends Phaser.Scene {
           currentTrace: data.currentTrace
         });
         this.hudElements.updateTraceMeter(data.currentTrace, data.maxTrace);
-        this.showCombatLog(`Trace +${data.amount} (${data.currentTrace}/${data.maxTrace})`);
+      this.showCombatLog(`Trace +${data.amount} (${data.currentTrace}/${data.maxTrace})`);
+      
+      // DYNAMIC: Enemy alert animation on trace thresholds
+      const tracePercent = data.currentTrace / data.maxTrace;
+      if (tracePercent >= 0.9 && this.lastTracePercent < 0.9) {
+        animateEnemyAlert(this, this.enemySprite, 'critical').catch(err => console.error(err));
+        this.showCombatLog('⚠️ CRITICAL TRACE LEVEL!');
+      } else if (tracePercent >= 0.66 && this.lastTracePercent < 0.66) {
+        animateEnemyAlert(this, this.enemySprite, 'high').catch(err => console.error(err));
+        this.showCombatLog('⚠️ High trace detected!');
+      } else if (tracePercent >= 0.33 && this.lastTracePercent < 0.33) {
+        animateEnemyAlert(this, this.enemySprite, 'medium').catch(err => console.error(err));
+      }
+      this.lastTracePercent = tracePercent;
       });
 
       this.events.on('traceReduced', (data) => {
@@ -1361,25 +1386,39 @@ export default class BattleScene extends Phaser.Scene {
         return;
       }
 
-      // VISUAL EFFECT: Enemy lunges forward for attacks
+      // DYNAMIC SEARCH: Enemy searches for player before acting
+      const playerTrace = this.runner.currentTrace;
+      const tracePercent = playerTrace / this.runner.maxTrace;
+      
+      if (tracePercent > 0.3) {
+        await animateEnemySearch(this, this.enemySprite, tracePercent);
+      }
+
+      // VISUAL EFFECT: Dynamic attack based on damage
       if (intent.type === 'attack' || intent.type === 'multiAttack') {
         const originalX = this.enemySprite.x;
         const originalY = this.enemySprite.y;
+        
+        // Calculate intensity based on damage
+        const damage = intent.type === 'multiAttack' ? (intent.value * intent.hits) : intent.value;
+        const intensity = Math.min(damage / 20, 1.5); // Scale 0-1.5x
 
-        // Lunge forward
+        // Dynamic lunge - more damage = more aggressive
         await this.tweens.add({
           targets: this.enemySprite,
-          x: originalX - 60,
-          y: originalY + 30,
-          scaleX: 1.15,
-          scaleY: 0.95,
-          duration: 200,
+          x: originalX - (60 * intensity),
+          y: originalY + (30 * intensity),
+          scaleX: 1.0 + (0.15 * intensity),
+          scaleY: 1.0 - (0.05 * intensity),
+          duration: Math.max(150, 300 - (damage * 5)), // Faster for high damage
           ease: 'Power2',
           yoyo: true,
           onComplete: () => {
-            // Flash red during attack
             if (this.enemySprite && this.enemySprite.scene) {
               animateImpactFlash(this, this.enemySprite, 0xff0055, 150).catch(err => console.error(err));
+              
+              // Dynamic screen shake based on damage
+              this.cameras.main.shake(150 * intensity, 0.004 * intensity);
             }
           }
         });
@@ -1390,9 +1429,29 @@ export default class BattleScene extends Phaser.Scene {
         animateEnergyBeam(this, originalX, originalY, playerX, playerY, 0xff0055).catch(err => console.error(err));
 
       } else if (intent.type === 'defend') {
-        // Pulse for defend
-        await animatePulse(this, this.enemySprite, 1.15, 300);
-        animateShieldEffect(this, this.enemySprite.x, this.enemySprite.y, 90).catch(err => console.error(err));
+        const blockAmount = intent.value || 0;
+        const spinSpeed = Math.min(blockAmount / 10, 1.0); // 0-1x rotation speed
+        
+        // Dynamic shield pulse based on block amount
+        await this.tweens.add({
+          targets: this.enemySprite,
+          rotation: Math.PI * 2 * spinSpeed,
+          scaleX: 1.2,
+          scaleY: 1.2,
+          duration: 400,
+          ease: 'Back.Out',
+          onComplete: () => {
+            this.enemySprite.rotation = 0;
+            this.enemySprite.setScale(1.0);
+          }
+        });
+        
+        animateShieldEffect(this, this.enemySprite.x, this.enemySprite.y, 90 + blockAmount).catch(err => console.error(err));
+
+      } else if (intent.type === 'trace') {
+        // Trace intent - enemy "scans" aggressively
+        await animateEnemySearch(this, this.enemySprite, 1.0);
+        await animatePulse(this, this.enemySprite, 1.15, 250);
 
       } else {
         // Default pulse
@@ -1946,6 +2005,20 @@ createPersistentShield(x, y, isPlayer) {
       audioManager.playSound(GAME_CONFIG.AUDIO.SFX_KEYS.VICTORY);
 
       this.showCombatLog('VICTORY!');
+      
+      // DYNAMIC: Enemy defeat animation
+      if (this.enemySprite && this.enemySprite.scene) {
+        this.tweens.add({
+          targets: this.enemySprite,
+          alpha: 0,
+          scaleX: 0.5,
+          scaleY: 0.5,
+          rotation: Math.PI * 2,
+          duration: 800,
+          ease: 'Power2'
+        });
+        animateParticleExplosion(this, this.enemySprite.x, this.enemySprite.y, 0xff0055, 30).catch(err => console.error(err));
+      }
 
       // CRITICAL FIX: Check if this is a BOSS victory - skip RewardScene and go directly to VictoryScene
       if (this.isBossCombat) {
@@ -2057,6 +2130,11 @@ createPersistentShield(x, y, isPlayer) {
       audioManager.playSound(GAME_CONFIG.AUDIO.SFX_KEYS.DEFEAT);
 
       this.showCombatLog('DETECTED!');
+      
+      // DYNAMIC: Enemy victory celebration
+      if (this.enemySprite && this.enemySprite.scene) {
+        animateEnemyVictory(this, this.enemySprite).catch(err => console.error(err));
+      }
 
       this.time.delayedCall(GAME_CONFIG.ANIMATION.DEFEAT_SCREEN_DELAY, () => {
         const combatStats = combatSystem.getCombatStats();
