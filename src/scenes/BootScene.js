@@ -307,16 +307,16 @@ export default class BootScene extends Phaser.Scene {
       this.load.image('icon_frail', `${GAME_CONFIG.ASSETS.ICONS}icon_frail.png`);
       
             // Background images - all 10 backgrounds
-      this.load.image('bg_menu', `${GAME_CONFIG.ASSETS.SPRITE_PATH}backgrounds/bg_menu.jpg`);
-      this.load.image('bg_battle', `${GAME_CONFIG.ASSETS.SPRITE_PATH}backgrounds/bg_battle.jpg`);
-      this.load.image('bg_battle_elite', `${GAME_CONFIG.ASSETS.SPRITE_PATH}backgrounds/bg_battle_elite.jpg`);
-      this.load.image('bg_battle_boss', `${GAME_CONFIG.ASSETS.SPRITE_PATH}backgrounds/bg_battle_boss.jpg`);
-      this.load.image('bg_map', `${GAME_CONFIG.ASSETS.SPRITE_PATH}backgrounds/bg_map.jpg`);
-      this.load.image('bg_reward', `${GAME_CONFIG.ASSETS.SPRITE_PATH}backgrounds/bg_reward.jpg`);
-      this.load.image('bg_defeat', `${GAME_CONFIG.ASSETS.SPRITE_PATH}backgrounds/bg_defeat.jpg`);
-      this.load.image('bg_victory', `${GAME_CONFIG.ASSETS.SPRITE_PATH}backgrounds/bg_victory.jpg`);
-      this.load.image('bg_event', `${GAME_CONFIG.ASSETS.SPRITE_PATH}backgrounds/bg_event.jpg`);
-      this.load.image('bg_upgrade', `${GAME_CONFIG.ASSETS.SPRITE_PATH}backgrounds/bg_upgrade.jpg`);
+      this.load.image('bg_menu', `${GAME_CONFIG.ASSETS.SPRITE_PATH}backgrounds/bg_menu.png`);
+      this.load.image('bg_battle', `${GAME_CONFIG.ASSETS.SPRITE_PATH}backgrounds/bg_battle.png`);
+      this.load.image('bg_battle_elite', `${GAME_CONFIG.ASSETS.SPRITE_PATH}backgrounds/bg_battle_elite.png`);
+      this.load.image('bg_battle_boss', `${GAME_CONFIG.ASSETS.SPRITE_PATH}backgrounds/bg_battle_boss.png`);
+      this.load.image('bg_map', `${GAME_CONFIG.ASSETS.SPRITE_PATH}backgrounds/bg_map.png`);
+      this.load.image('bg_reward', `${GAME_CONFIG.ASSETS.SPRITE_PATH}backgrounds/bg_reward.png`);
+      this.load.image('bg_defeat', `${GAME_CONFIG.ASSETS.SPRITE_PATH}backgrounds/bg_defeat.png`);
+      this.load.image('bg_victory', `${GAME_CONFIG.ASSETS.SPRITE_PATH}backgrounds/bg_victory.png`);
+      this.load.image('bg_event', `${GAME_CONFIG.ASSETS.SPRITE_PATH}backgrounds/bg_event.png`);
+      this.load.image('bg_upgrade', `${GAME_CONFIG.ASSETS.SPRITE_PATH}backgrounds/bg_upgrade.png`);
       
       
       console.log('[BootScene] ✅ Sprite assets queued');
