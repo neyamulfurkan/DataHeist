@@ -448,7 +448,7 @@ export const ICE_LIBRARY = {
     id: "ice_warden",
     name: "Warden ICE",
     type: "firewall",
-    tier: 2,
+    tier: 3,
     maxHP: 75,
     intentPool: [
       { type: "attack", value: 16, weight: 50 },
@@ -489,7 +489,7 @@ export const ICE_LIBRARY = {
     id: "ice_assassin",
     name: "Assassin ICE",
     type: "sentry",
-    tier: 2,
+    tier: 3,
     maxHP: 65,
     intentPool: [
       { type: "attack", value: 18, weight: 60 },
@@ -872,9 +872,16 @@ try {
 }
 
 export const ICE_BY_TIER = {
-  tier1: Object.values(ICE_LIBRARY).filter(ice => ice.tier === 1),
+  tier1: Object.values(ICE_LIBRARY).filter(ice => ice.tier === 1 && ice.type !== 'boss'),
   tier2: Object.values(ICE_LIBRARY).filter(ice => ice.tier === 2 && ice.type !== 'boss'),
-  tier3: Object.values(ICE_LIBRARY).filter(ice => ice.tier === 2 && ice.type !== 'boss')
+  tier3: Object.values(ICE_LIBRARY).filter(ice => ice.tier === 3 && ice.type !== 'boss')
+};
+
+// ELITE ENEMIES: Separate pool for elite combat nodes
+export const ELITE_ICE = {
+  tier1: ['ice_barrier', 'ice_sentry'], // Act 1 elites
+  tier2: ['ice_enforcer', 'ice_phantom', 'ice_adaptive'], // Act 2 elites
+  tier3: ['ice_warden', 'ice_assassin', 'ice_corruptor'] // Act 3 elites
 };
 
 export const BOSSES = Object.values(ICE_LIBRARY).filter(ice => ice.type === 'boss');
@@ -887,3 +894,6 @@ console.log('[iceDefinitions] ICE by tier:', {
 });
 
 export default ICE_LIBRARY;
+
+// Export elite pools for MapGenerator
+export { ELITE_ICE };

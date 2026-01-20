@@ -20,7 +20,7 @@
 
 import { GAME_CONFIG } from '../config.js';
 import { seededRandom, shuffle, pickRandom, clamp } from '../utils/MathUtils.js';
-import { ICE_LIBRARY, ICE_BY_TIER, BOSSES } from '../data/iceDefinitions.js';
+import { ICE_LIBRARY, ICE_BY_TIER, BOSSES, ELITE_ICE } from '../data/iceDefinitions.js';
 import { EVENT_LIBRARY, EVENTS_BY_TIER, getRandomEvent } from '../data/eventDefinitions.js';
 
 console.log('[MapGenerator] Loading map generation system...');
@@ -596,13 +596,15 @@ export class MapGenerator {
         } else {
           node.data.enemyPool = enemyPool;
         }
+        // CRITICAL: Mark as regular combat for scaling
+        node.data.isElite = false;
         break;
         
       case 'elite':
         const elitePool = this.getEnemyPoolForNode('elite', actNumber);
         if (!elitePool || elitePool.length === 0) {
           console.error('[MapGenerator] assignNodeData: No elite enemies available for node', node.id);
-          node.data.enemyPool = ['ice_guardian'];
+          node.data.enemyPool = ['ice_adaptive']; // Better fallback
         } else {
           node.data.enemyPool = elitePool;
         }
@@ -650,19 +652,28 @@ export class MapGenerator {
   getEnemyPoolForNode(nodeType, actNumber) {
     const validAct = clamp(actNumber, 1, 3);
     
-    // Elite nodes ALWAYS use tier 2 enemies (Act 2-3 difficulty)
+    console.log('[MapGenerator] getEnemyPoolForNode: Selecting enemy pool', {
+      nodeType,
+      actNumber: validAct
+    });
+    
+    // ELITE NODES: Use dedicated elite enemy pool
     if (nodeType === 'elite') {
-      const tier2Enemies = ICE_BY_TIER.tier2 || [];
-      if (tier2Enemies.length === 0) {
-        console.error('[MapGenerator] getEnemyPoolForNode: No tier2 enemies available');
+      const { ELITE_ICE } = require('../data/iceDefinitions.js');
+      const tierKey = `tier${validAct}`;
+      const elitePool = ELITE_ICE[tierKey] || [];
+      
+      if (elitePool.length === 0) {
+        console.error('[MapGenerator] getEnemyPoolForNode: No elite enemies for', tierKey);
         return ['ice_guardian'];
       }
-      return tier2Enemies.map(ice => ice.id);
+      
+      console.log('[MapGenerator] getEnemyPoolForNode: Elite pool for act', validAct, ':', elitePool);
+      return elitePool;
     }
     
-    // Regular combat nodes: use tier matching act number
-    // Act 1 = tier1, Act 2-3 = tier2 (NO BOSSES)
-    const tierKey = validAct === 1 ? 'tier1' : 'tier2';
+    // REGULAR COMBAT NODES: Use tier-appropriate enemies
+    const tierKey = `tier${validAct}`;
     const tierEnemies = ICE_BY_TIER[tierKey] || [];
     
     if (tierEnemies.length === 0) {
@@ -670,7 +681,11 @@ export class MapGenerator {
       return ['ice_guardian'];
     }
     
-    return tierEnemies.map(ice => ice.id);
+    // Return enemy IDs only
+    const enemyIds = tierEnemies.map(ice => ice.id);
+    
+    console.log('[MapGenerator] getEnemyPoolForNode: Combat pool for act', validAct, ':', enemyIds);
+    return enemyIds;
   }
 
   getBossForAct(actNumber) {
