@@ -309,18 +309,21 @@ export default class BattleScene extends Phaser.Scene {
         });
         devilEmoji.setOrigin(0.5);
         devilEmoji.setDepth(GAME_CONFIG.UI.Z_INDEX.ENEMY + 2);
-
-        const enemyLabel = this.add.text(x, y, this.enemy.name, {
-          fontSize: '20px',
-          color: GAME_CONFIG.UI.COLORS.TEXT_PRIMARY,
-          fontFamily: GAME_CONFIG.UI.TEXT.FONT_FAMILY,
-          fontStyle: 'bold'
-        });
-        enemyLabel.setOrigin(0.5);
-        enemyLabel.setDepth(GAME_CONFIG.UI.Z_INDEX.ENEMY + 1);
       }
 
       this.enemySprite.setDepth(GAME_CONFIG.UI.Z_INDEX.ENEMY);
+
+      // Add enemy name label above sprite (for ALL enemies, not just placeholder)
+      this.enemyNameLabel = this.add.text(x, y - 120, this.enemy.name, {
+        fontSize: '24px',
+        color: GAME_CONFIG.UI.COLORS.RED_WARNING,
+        fontFamily: GAME_CONFIG.UI.TEXT.FONT_FAMILY,
+        fontStyle: 'bold',
+        stroke: '#000000',
+        strokeThickness: 4
+      });
+      this.enemyNameLabel.setOrigin(0.5);
+      this.enemyNameLabel.setDepth(GAME_CONFIG.UI.Z_INDEX.ENEMY + 1);
 
       // VISUAL EFFECT: Enemy idle breathing animation
       this.startEnemyIdleAnimation();
