@@ -835,11 +835,14 @@ export default class BattleScene extends Phaser.Scene {
       logTitle.setDepth(GAME_CONFIG.UI.Z_INDEX.HUD);
 
       this.combatLogText = this.add.text(logX + 10, logY, '', {
-        fontSize: '12px',
+        fontSize: '14px',
         color: GAME_CONFIG.UI.COLORS.TEXT_PRIMARY,
         fontFamily: GAME_CONFIG.UI.TEXT.FONT_FAMILY,
         wordWrap: { width: logWidth - 20 },
-        lineSpacing: 2
+        lineSpacing: 4,
+        stroke: '#000000',
+        strokeThickness: 2,
+        fontStyle: 'bold'
       });
       this.combatLogText.setDepth(GAME_CONFIG.UI.Z_INDEX.HUD);
 

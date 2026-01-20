@@ -447,16 +447,28 @@ loadExistingRun() {
       hudBg.setStrokeStyle(2, GAME_CONFIG.UI.COLOR_HEX.CYAN_PRIMARY);
 
       const runnerName = this.add.text(40, 15, this.runner?.name || 'Unknown Runner', {
-        fontSize: '24px',
+        fontSize: '26px',
         color: GAME_CONFIG.UI.COLORS.CYAN_PRIMARY,
         fontFamily: GAME_CONFIG.UI.TEXT.FONT_FAMILY,
-        fontStyle: 'bold'
+        fontStyle: 'bold',
+        stroke: '#000000',
+        strokeThickness: 4,
+        shadow: {
+          offsetX: 2,
+          offsetY: 2,
+          color: '#000000',
+          blur: 4,
+          fill: true
+        }
       });
 
       const traceText = this.add.text(40, 45, '', {
-        fontSize: '16px',
+        fontSize: '18px',
         color: GAME_CONFIG.UI.COLORS.TEXT_PRIMARY,
-        fontFamily: GAME_CONFIG.UI.TEXT.FONT_FAMILY
+        fontFamily: GAME_CONFIG.UI.TEXT.FONT_FAMILY,
+        stroke: '#000000',
+        strokeThickness: 3,
+        fontStyle: 'bold'
       });
       traceText.setName('traceText');
 

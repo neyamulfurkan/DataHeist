@@ -134,20 +134,31 @@ export default class CardUI {
 
       const costText = this.scene.add.text(-85, -140, String(card.cost), {
         fontFamily: GAME_CONFIG.UI.TEXT.FONT_FAMILY,
-        fontSize: '24px',  // Increased from config
-        color: GAME_CONFIG.UI.TEXT.CARD_COST.color,
-        fontStyle: 'bold'
+        fontSize: '28px',
+        color: '#ffffff',
+        fontStyle: 'bold',
+        stroke: '#000000',
+        strokeThickness: 4
       });
       costText.setOrigin(0.5);
       container.add(costText);
 
       const nameText = this.scene.add.text(0, -130, card.name.toUpperCase(), {
         fontFamily: GAME_CONFIG.UI.TEXT.FONT_FAMILY,
-        fontSize: '18px',
+        fontSize: '20px',
         color: GAME_CONFIG.UI.TEXT.CARD_NAME.color,
         fontStyle: 'bold',
         align: 'center',
-        wordWrap: { width: 180 }
+        wordWrap: { width: 180 },
+        stroke: '#000000',
+        strokeThickness: 4,
+        shadow: {
+          offsetX: 1,
+          offsetY: 1,
+          color: '#000000',
+          blur: 2,
+          fill: true
+        }
       });
       nameText.setOrigin(0.5);
       container.add(nameText);
@@ -193,10 +204,14 @@ export default class CardUI {
 
       const descText = this.scene.add.text(0, 75, card.description, {
         fontFamily: GAME_CONFIG.UI.TEXT.FONT_FAMILY,
-        fontSize: '16px',
-        color: GAME_CONFIG.UI.TEXT.CARD_DESCRIPTION.color,
+        fontSize: '15px',
+        color: '#ffffff',
         align: 'center',
-        wordWrap: { width: 180 }
+        wordWrap: { width: 180 },
+        stroke: '#000000',
+        strokeThickness: 3,
+        lineSpacing: 2,
+        fontStyle: 'bold'
       });
       descText.setOrigin(0.5, 0);
       container.add(descText);

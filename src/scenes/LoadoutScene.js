@@ -144,9 +144,18 @@ export default class LoadoutScene extends Phaser.Scene {
         'SELECT YOUR RUNNER',
         {
           fontFamily: GAME_CONFIG.UI.TEXT.FONT_FAMILY,
-          fontSize: '48px',
+          fontSize: '52px',
           color: GAME_CONFIG.UI.COLORS.CYAN_PRIMARY,
-          fontStyle: 'bold'
+          fontStyle: 'bold',
+          stroke: '#000000',
+          strokeThickness: 6,
+          shadow: {
+            offsetX: 0,
+            offsetY: 0,
+            color: '#00f0ff',
+            blur: 12,
+            fill: true
+          }
         }
       );
       title.setOrigin(0.5);
@@ -157,8 +166,17 @@ export default class LoadoutScene extends Phaser.Scene {
         'Choose wisely - each runner has unique abilities',
         {
           fontFamily: GAME_CONFIG.UI.TEXT.FONT_FAMILY,
-          fontSize: '16px',
-          color: GAME_CONFIG.UI.COLORS.TEXT_PRIMARY
+          fontSize: '18px',
+          color: GAME_CONFIG.UI.COLORS.TEXT_PRIMARY,
+          stroke: '#000000',
+          strokeThickness: 3,
+          shadow: {
+            offsetX: 1,
+            offsetY: 1,
+            color: '#000000',
+            blur: 3,
+            fill: true
+          }
         }
       );
       subtitle.setOrigin(0.5);

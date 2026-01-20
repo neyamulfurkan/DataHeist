@@ -154,9 +154,18 @@ export default class RewardScene extends Phaser.Scene {
 
     const titleText = this.add.text(centerX, topY, 'VICTORY!', {
       fontFamily: GAME_CONFIG.UI.TEXT.FONT_FAMILY,
-      fontSize: '54px',
+      fontSize: '60px',
       color: GAME_CONFIG.UI.COLORS.CYAN_PRIMARY,
-      fontStyle: 'bold'
+      fontStyle: 'bold',
+      stroke: '#000000',
+      strokeThickness: 6,
+      shadow: {
+        offsetX: 0,
+        offsetY: 0,
+        color: '#00ff88',
+        blur: 20,
+        fill: true
+      }
     });
     titleText.setOrigin(0.5);
 
@@ -273,9 +282,18 @@ displayCardChoices() {
 
     const instructionText = this.add.text(centerX, centerY - 160, 'SELECT A CARD TO ADD TO YOUR DECK', {
       fontFamily: GAME_CONFIG.UI.TEXT.FONT_FAMILY,
-      fontSize: '24px',
+      fontSize: '26px',
       color: GAME_CONFIG.UI.COLORS.TEXT_PRIMARY,
-      fontStyle: 'bold'
+      fontStyle: 'bold',
+      stroke: '#000000',
+      strokeThickness: 4,
+      shadow: {
+        offsetX: 2,
+        offsetY: 2,
+        color: '#000000',
+        blur: 4,
+        fill: true
+      }
     });
     instructionText.setOrigin(0.5);
 

@@ -258,7 +258,14 @@ export default class MenuScene extends Phaser.Scene {
       fontFamily: GAME_CONFIG.UI.TEXT.FONT_FAMILY,
       fontStyle: 'bold',
       stroke: '#000000',
-      strokeThickness: 4
+      strokeThickness: 6,
+      shadow: {
+        offsetX: 0,
+        offsetY: 0,
+        color: '#00f0ff',
+        blur: 15,
+        fill: true
+      }
     });
     this.title.setOrigin(0.5);
     this.title.setDepth(10);
@@ -272,9 +279,18 @@ export default class MenuScene extends Phaser.Scene {
     });
 
     this.subtitle = this.add.text(centerX, titleY + 70, 'Cyberpunk Hacking Roguelike', {
-      fontSize: '20px',
+      fontSize: '22px',
       color: '#ffffff',
-      fontFamily: GAME_CONFIG.UI.TEXT.FONT_FAMILY
+      fontFamily: GAME_CONFIG.UI.TEXT.FONT_FAMILY,
+      stroke: '#000000',
+      strokeThickness: 4,
+      shadow: {
+        offsetX: 2,
+        offsetY: 2,
+        color: '#000000',
+        blur: 4,
+        fill: true
+      }
     });
     this.subtitle.setOrigin(0.5);
     this.subtitle.setDepth(10);
@@ -394,10 +410,17 @@ export default class MenuScene extends Phaser.Scene {
     bg.setStrokeStyle(3, 0xffffff, enabled ? 1 : 0.5);
 
     const label = this.add.text(0, 0, text, {
-      fontSize: '24px',
-      color: enabled ? '#000000' : '#444444',
+      fontSize: '26px',
+      color: enabled ? '#000000' : '#666666',
       fontFamily: GAME_CONFIG.UI.TEXT.FONT_FAMILY,
-      fontStyle: 'bold'
+      fontStyle: 'bold',
+      shadow: enabled ? {
+        offsetX: 1,
+        offsetY: 1,
+        color: '#ffffff',
+        blur: 2,
+        fill: true
+      } : undefined
     });
     label.setOrigin(0.5);
 

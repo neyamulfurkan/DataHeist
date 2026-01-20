@@ -161,12 +161,19 @@ export default class HUDElements {
         0,
         'TRACE: 0 / 100',
         {
-          fontSize: '20px',
-          color: GAME_CONFIG.UI.COLORS.TEXT_PRIMARY,
+          fontSize: '22px',
+          color: '#ffffff',
           fontFamily: GAME_CONFIG.UI.TEXT.FONT_FAMILY,
           fontStyle: 'bold',
           stroke: '#000000',
-          strokeThickness: 3
+          strokeThickness: 4,
+          shadow: {
+            offsetX: 2,
+            offsetY: 2,
+            color: '#000000',
+            blur: 3,
+            fill: true
+          }
         }
       );
       this.traceMeterText.setOrigin(0.5);
@@ -203,10 +210,19 @@ export default class HUDElements {
       this.cpuContainer.setDepth(GAME_CONFIG.UI.Z_INDEX.HUD);
 
       this.cpuLabel = this.scene.add.text(0, 0, 'CPU:', {
-        fontSize: '20px',
+        fontSize: '22px',
         color: GAME_CONFIG.UI.COLORS.CYAN_PRIMARY,
         fontFamily: GAME_CONFIG.UI.TEXT.FONT_FAMILY,
-        fontStyle: 'bold'
+        fontStyle: 'bold',
+        stroke: '#000000',
+        strokeThickness: 3,
+        shadow: {
+          offsetX: 1,
+          offsetY: 1,
+          color: '#000000',
+          blur: 2,
+          fill: true
+        }
       });
       this.cpuLabel.setOrigin(0, 0.5);
 
@@ -318,10 +334,19 @@ export default class HUDElements {
         0,
         '40 / 40',
         {
-          fontSize: '18px',
-          color: GAME_CONFIG.UI.COLORS.TEXT_PRIMARY,
+          fontSize: '20px',
+          color: '#ffffff',
           fontFamily: GAME_CONFIG.UI.TEXT.FONT_FAMILY,
-          fontStyle: 'bold'
+          fontStyle: 'bold',
+          stroke: '#000000',
+          strokeThickness: 4,
+          shadow: {
+            offsetX: 1,
+            offsetY: 1,
+            color: '#000000',
+            blur: 2,
+            fill: true
+          }
         }
       );
       this.enemyHPText.setOrigin(0.5);

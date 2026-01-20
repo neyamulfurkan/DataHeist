@@ -360,10 +360,17 @@ export default class BattleUI {
       this.endTurnButtonBg.setStrokeStyle(2, GAME_CONFIG.UI.COLOR_HEX.WHITE);
 
       this.endTurnButtonText = this.scene.add.text(0, 0, 'END TURN', {
-        fontSize: '16px',
+        fontSize: '18px',
         color: '#000000',
         fontFamily: GAME_CONFIG.UI.TEXT.FONT_FAMILY,
-        fontStyle: 'bold'
+        fontStyle: 'bold',
+        shadow: {
+          offsetX: 1,
+          offsetY: 1,
+          color: '#ffffff',
+          blur: 2,
+          fill: true
+        }
       });
       this.endTurnButtonText.setOrigin(0.5);
 

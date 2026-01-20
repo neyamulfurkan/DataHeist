@@ -925,19 +925,32 @@ try {
       bg.setStrokeStyle(2, GAME_CONFIG.UI.COLOR_HEX.CYAN_PRIMARY);
 
       const title = this.scene.add.text(0, -30, node.type.toUpperCase(), {
-        fontSize: '16px',
+        fontSize: '18px',
         color: GAME_CONFIG.UI.COLORS.CYAN_PRIMARY,
         fontFamily: GAME_CONFIG.UI.TEXT.FONT_FAMILY,
-        fontStyle: 'bold'
+        fontStyle: 'bold',
+        stroke: '#000000',
+        strokeThickness: 3,
+        shadow: {
+          offsetX: 1,
+          offsetY: 1,
+          color: '#000000',
+          blur: 2,
+          fill: true
+        }
       }).setOrigin(0.5);
 
       const description = this.getNodeDescription(node);
       const descText = this.scene.add.text(0, 0, description, {
-        fontSize: '12px',
-        color: GAME_CONFIG.UI.COLORS.TEXT_PRIMARY,
+        fontSize: '14px',
+        color: '#ffffff',
         fontFamily: GAME_CONFIG.UI.TEXT.FONT_FAMILY,
         align: 'center',
-        wordWrap: { width: bgWidth - padding * 2 }
+        wordWrap: { width: bgWidth - padding * 2 },
+        stroke: '#000000',
+        strokeThickness: 2,
+        lineSpacing: 2,
+        fontStyle: 'bold'
       }).setOrigin(0.5);
 
       this.tooltipContainer.add([bg, title, descText]);
