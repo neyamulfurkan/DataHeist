@@ -160,6 +160,10 @@ export default class BootScene extends Phaser.Scene {
   setupLoadListeners() {
     console.log('[BootScene] Setting up load event listeners...');
     
+    // Increase parallel downloads for faster loading (default is 4, max recommended is 32)
+    this.load.setMaxParallelDownloads(32);
+    console.log('[BootScene] Parallel downloads set to 32 for maximum speed');
+    
     this.load.on('progress', (progress) => {
       this.updateProgressBar(progress);
     });
@@ -551,8 +555,96 @@ create() {
     console.log('[BootScene] CREATE PHASE STARTED');
     console.log('[BootScene] ========================================');
     
+    // Optimize textures after loading
+    this.optimizeLoadedTextures();
+    
     // Phaser doesn't properly handle async create(), so we wrap in a separate method
     this.initializeSystems();
+  }
+
+  /**
+   * Optimize loaded textures by scaling down oversized images
+   */
+  optimizeLoadedTextures() {
+    console.log('[BootScene] Optimizing textures for performance...');
+    
+    const MAX_CARD_SIZE = 512; // Max dimension for card images
+    const MAX_ENEMY_SIZE = 512; // Max dimension for enemy sprites
+    const MAX_BG_SIZE = 1920; // Max dimension for backgrounds
+    
+    let optimizedCount = 0;
+    
+    this.textures.each((texture) => {
+      const key = texture.key;
+      
+      // Skip system textures
+      if (key === '__DEFAULT' || key === '__MISSING' || key === '__WHITE') {
+        return;
+      }
+      
+      const source = texture.getSourceImage();
+      if (!source || !source.width || !source.height) {
+        return;
+      }
+      
+      let maxSize = null;
+      
+      // Determine max size based on texture type
+      if (key.startsWith('card_')) {
+        maxSize = MAX_CARD_SIZE;
+      } else if (key.startsWith('ice_')) {
+        maxSize = MAX_ENEMY_SIZE;
+      } else if (key.startsWith('bg_')) {
+        maxSize = MAX_BG_SIZE;
+      } else if (key.startsWith('icon_')) {
+        maxSize = 128; // Icons are small
+      } else if (key.startsWith('runner_')) {
+        maxSize = 256;
+      }
+      
+      if (!maxSize) {
+        return; // Skip unknown texture types
+      }
+      
+      const width = source.width;
+      const height = source.height;
+      const maxDimension = Math.max(width, height);
+      
+      // Only resize if texture is too large
+      if (maxDimension > maxSize) {
+        const scale = maxSize / maxDimension;
+        const newWidth = Math.floor(width * scale);
+        const newHeight = Math.floor(height * scale);
+        
+        console.log(`[BootScene] Resizing ${key}: ${width}x${height} → ${newWidth}x${newHeight}`);
+        
+        try {
+          // Create canvas for resizing
+          const canvas = document.createElement('canvas');
+          canvas.width = newWidth;
+          canvas.height = newHeight;
+          const ctx = canvas.getContext('2d');
+          
+          // Use high-quality scaling
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          
+          // Draw scaled image
+          ctx.drawImage(source, 0, 0, width, height, 0, 0, newWidth, newHeight);
+          
+          // Replace texture
+          this.textures.remove(key);
+          this.textures.addCanvas(key, canvas);
+          
+          optimizedCount++;
+          
+        } catch (error) {
+          console.warn(`[BootScene] Failed to optimize ${key}:`, error.message);
+        }
+      }
+    });
+    
+    console.log(`[BootScene] ✅ Optimized ${optimizedCount} textures`);
   }
 
   async initializeSystems() {
