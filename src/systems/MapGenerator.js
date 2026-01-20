@@ -659,7 +659,6 @@ export class MapGenerator {
     
     // ELITE NODES: Use dedicated elite enemy pool
     if (nodeType === 'elite') {
-      const { ELITE_ICE } = require('../data/iceDefinitions.js');
       const tierKey = `tier${validAct}`;
       const elitePool = ELITE_ICE[tierKey] || [];
       

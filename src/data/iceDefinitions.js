@@ -877,14 +877,14 @@ export const ICE_BY_TIER = {
   tier3: Object.values(ICE_LIBRARY).filter(ice => ice.tier === 3 && ice.type !== 'boss')
 };
 
+export const BOSSES = Object.values(ICE_LIBRARY).filter(ice => ice.type === 'boss');
+
 // ELITE ENEMIES: Separate pool for elite combat nodes
 export const ELITE_ICE = {
   tier1: ['ice_barrier', 'ice_sentry'], // Act 1 elites
   tier2: ['ice_enforcer', 'ice_phantom', 'ice_adaptive'], // Act 2 elites
   tier3: ['ice_warden', 'ice_assassin', 'ice_corruptor'] // Act 3 elites
 };
-
-export const BOSSES = Object.values(ICE_LIBRARY).filter(ice => ice.type === 'boss');
 
 console.log('[iceDefinitions] ✅ Module loaded successfully');
 console.log('[iceDefinitions] ICE by tier:', {
