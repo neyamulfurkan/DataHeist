@@ -894,6 +894,3 @@ console.log('[iceDefinitions] ICE by tier:', {
 });
 
 export default ICE_LIBRARY;
-
-// Export elite pools for MapGenerator
-export { ELITE_ICE };
