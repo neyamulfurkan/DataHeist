@@ -68,7 +68,7 @@ export const CARD_LIBRARY = {
     ],
     description: "Deal 6 damage.",
     upgradeEffect: { type: "damage", value: 9 },
-    spriteKey: "card_exploit_001",
+    spriteKey: "card_exploit_009",
     keywords: [],
     isExhaust: false,
     isEthereal: false
@@ -86,7 +86,7 @@ export const CARD_LIBRARY = {
     ],
     description: "Deal 5 damage. Draw 1 card.",
     upgradeEffect: { type: "damage", value: 7 },
-    spriteKey: "card_exploit_002",
+    spriteKey: "card_exploit_010",
     keywords: [],
     isExhaust: false,
     isEthereal: false
@@ -121,7 +121,7 @@ export const CARD_LIBRARY = {
     ],
     description: "Deal 3 damage twice.",
     upgradeEffect: { type: "damage", value: 5 }, // Each hit becomes 6
-    spriteKey: "card_exploit_004",
+    spriteKey: "card_exploit_012",
     keywords: [],
     isExhaust: false,
     isEthereal: false
@@ -139,7 +139,7 @@ export const CARD_LIBRARY = {
     ],
     description: "Deal 10 damage. Risky: Increase your Trace by 2.",
     upgradeEffect: { type: "damage", value: 14 },
-    spriteKey: "card_exploit_005",
+    spriteKey: "card_exploit_013",
     keywords: [],
     isExhaust: false,
     isEthereal: false
@@ -212,7 +212,7 @@ export const CARD_LIBRARY = {
     ],
     description: "Gain 5 Block.",
     upgradeEffect: { type: "block", value: 8 },
-    spriteKey: "card_defense_001",
+    spriteKey: "card_defense_002",
     keywords: [],
     isExhaust: false,
     isEthereal: false
@@ -265,7 +265,7 @@ export const CARD_LIBRARY = {
     ],
     description: "Gain 10 Block. Reduce Trace by 3.",
     upgradeEffect: { value: 5 },
-    spriteKey: "card_defense_001",
+    spriteKey: "card_defense_003",
     keywords: [],
     isExhaust: false,
     isEthereal: false
@@ -321,7 +321,7 @@ export const CARD_LIBRARY = {
     ],
     description: "Draw 2 cards.",
     upgradeEffect: { type: "draw", value: 3 },
-    spriteKey: "card_utility_001",
+    spriteKey: "card_utility_006",
     keywords: ["exhaust"],
     isExhaust: true,
     isEthereal: false
@@ -413,7 +413,7 @@ export const CARD_LIBRARY = {
     ],
     description: "Apply 3 Poison.",
     upgradeEffect: { type: "applyStatus", stacks: 5, value: 5 },
-    spriteKey: "card_virus_001",
+    spriteKey: "card_virus_003",
     keywords: [],
     isExhaust: false,
     isEthereal: false
@@ -453,7 +453,7 @@ export const CARD_LIBRARY = {
     ],
     description: "Deal 18 damage. Gain 5 Trace.",
     upgradeEffect: { type: "damage", value: 24 },
-    spriteKey: "card_exploit_002",
+    spriteKey: "card_exploit_010",
     keywords: [],
     isExhaust: false,
     isEthereal: false
@@ -470,7 +470,7 @@ export const CARD_LIBRARY = {
     ],
     description: "Deal 6 damage. Each time this deals damage this turn, deal 2 more damage.",
     upgradeEffect: { type: "damage", value: 9 },
-    spriteKey: "card_exploit_003",
+    spriteKey: "card_exploit_011",
     keywords: ["scaling"],
     isExhaust: false,
     isEthereal: false
@@ -529,7 +529,7 @@ export const CARD_LIBRARY = {
     ],
     description: "Gain 12 Block. Gain 1 Dexterity.",
     upgradeEffect: { type: "block", value: 16 },
-    spriteKey: "card_defense_001",
+    spriteKey: "card_defense_002",
     keywords: [],
     isExhaust: false,
     isEthereal: false

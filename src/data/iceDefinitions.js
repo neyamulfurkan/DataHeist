@@ -381,7 +381,7 @@ export const ICE_LIBRARY = {
       cardChoices: 3,
       cardPool: "uncommon"
     },
-    spriteKey: "ice_striker",
+    spriteKey: "ice_sentry",
     description: "Elite enforcer. Follows a 3-turn pattern: multi-attack, heavy attack, defend."
   },
 
@@ -432,7 +432,7 @@ export const ICE_LIBRARY = {
       cardChoices: 3,
       cardPool: "rare"
     },
-    spriteKey: "ice_phantom",
+    spriteKey: "ice_adaptive",
     description: "Elusive elite. Adapts to player defenses and becomes desperate when wounded."
   },
 
@@ -481,7 +481,7 @@ export const ICE_LIBRARY = {
       cardChoices: 3,
       cardPool: "uncommon"
     },
-    spriteKey: "ice_striker",
+    spriteKey: "ice_barrier",
     description: "Act 3 heavy defender. Balances offense and defense."
   },
 
@@ -522,7 +522,7 @@ export const ICE_LIBRARY = {
       cardChoices: 3,
       cardPool: "uncommon"
     },
-    spriteKey: "ice_phantom",
+    spriteKey: "ice_tracer",
     description: "Act 3 aggressive striker. Punishes low block with multi-attacks."
   },
   ice_firewall_boss: {
