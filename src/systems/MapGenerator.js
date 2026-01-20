@@ -592,9 +592,11 @@ export class MapGenerator {
         const enemyPool = this.getEnemyPoolForNode('normal', actNumber);
         if (!enemyPool || enemyPool.length === 0) {
           console.error('[MapGenerator] assignNodeData: No enemies available for combat node', node.id);
-          node.data.enemyPool = ['ice_guardian'];
+          node.data.enemyId = 'ice_guardian';
         } else {
-          node.data.enemyPool = enemyPool;
+          // CRITICAL FIX: Assign single enemy ID, not pool
+          const randomIndex = Math.floor(this.rng() * enemyPool.length);
+          node.data.enemyId = enemyPool[randomIndex];
         }
         // CRITICAL: Mark as regular combat for scaling
         node.data.isElite = false;
@@ -604,9 +606,11 @@ export class MapGenerator {
         const elitePool = this.getEnemyPoolForNode('elite', actNumber);
         if (!elitePool || elitePool.length === 0) {
           console.error('[MapGenerator] assignNodeData: No elite enemies available for node', node.id);
-          node.data.enemyPool = ['ice_adaptive']; // Better fallback
+          node.data.enemyId = 'ice_adaptive';
         } else {
-          node.data.enemyPool = elitePool;
+          // CRITICAL FIX: Assign single enemy ID, not pool
+          const randomIndex = Math.floor(this.rng() * elitePool.length);
+          node.data.enemyId = elitePool[randomIndex];
         }
         // CRITICAL FIX: Mark elite nodes for extra scaling
         node.data.isElite = true;

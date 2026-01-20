@@ -754,16 +754,14 @@ loadExistingRun() {
   enterCombat(node) {
     console.log('[MapScene] enterCombat: Starting combat encounter');
 
-    if (!node.data || !node.data.enemyPool || node.data.enemyPool.length === 0) {
-      console.error('[MapScene] enterCombat: No enemy pool defined for node:', node.id);
+    if (!node.data || !node.data.enemyId) {
+      console.error('[MapScene] enterCombat: No enemy ID defined for node:', node.id);
       return;
     }
 
     try {
-      const enemyId = node.data.enemyPool[Math.floor(Math.random() * node.data.enemyPool.length)];
+      const enemyId = node.data.enemyId;
       console.log('[MapScene] enterCombat: Selected enemy:', enemyId);
-
-      // REMOVED DUPLICATE SAVE - already saved in handleNodeClick
 
       this.scene.start('BattleScene', {
         runner: this.runner,
@@ -772,7 +770,9 @@ loadExistingRun() {
         runState: this.runState,
         nodeId: node.id,
         isElite: false,
-        isBoss: false
+        isBoss: false,
+        nodeData: node.data,
+        actNumber: this.runState.actNumber
       });
 
     } catch (error) {
@@ -785,13 +785,13 @@ loadExistingRun() {
   enterEliteCombat(node) {
     console.log('[MapScene] enterEliteCombat: Starting elite combat encounter');
 
-    if (!node.data || !node.data.enemyPool || node.data.enemyPool.length === 0) {
-      console.error('[MapScene] enterEliteCombat: No enemy pool defined for node:', node.id);
+    if (!node.data || !node.data.enemyId) {
+      console.error('[MapScene] enterEliteCombat: No enemy ID defined for node:', node.id);
       return;
     }
 
     try {
-      const enemyId = node.data.enemyPool[Math.floor(Math.random() * node.data.enemyPool.length)];
+      const enemyId = node.data.enemyId;
       console.log('[MapScene] enterEliteCombat: Selected elite enemy:', enemyId);
 
       this.autoSave();
@@ -803,7 +803,9 @@ loadExistingRun() {
         runState: this.runState,
         nodeId: node.id,
         isElite: true,
-        isBoss: false
+        isBoss: false,
+        nodeData: node.data,
+        actNumber: this.runState.actNumber
       });
 
     } catch (error) {
