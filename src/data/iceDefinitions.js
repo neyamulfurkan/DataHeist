@@ -440,6 +440,91 @@ export const ICE_LIBRARY = {
   // BOSS ENEMIES - TIER 3 (3 bosses)
   // ============================================================================
 
+  // ============================================================================
+  // ACT 3 ENEMIES - TIER 2 SCALED (2 enemies)
+  // ============================================================================
+
+  ice_warden: {
+    id: "ice_warden",
+    name: "Warden ICE",
+    type: "firewall",
+    tier: 2,
+    maxHP: 75,
+    intentPool: [
+      { type: "attack", value: 16, weight: 50 },
+      { type: "defend", value: 14, weight: 30 },
+      { type: "trace", value: 12, weight: 20 }
+    ],
+    aiLogic: function(gameState) {
+      if (!gameState || !gameState.enemy) {
+        console.error('[iceDefinitions] ice_warden.aiLogic: Invalid gameState');
+        return { type: "attack", value: 16 };
+      }
+      
+      const enemyBlock = gameState.enemy.block || 0;
+      
+      if (enemyBlock > 15) {
+        if (GAME_CONFIG.DEBUG_MODE && GAME_CONFIG.LOG_VERBOSE) {
+          console.log('[iceDefinitions] ice_warden.aiLogic: High block, attacking');
+        }
+        return { type: "attack", value: 20 };
+      }
+      
+      const selectedIntent = weightedRandom(
+        this.intentPool.map(intent => ({ value: intent, weight: intent.weight }))
+      );
+      
+      return selectedIntent || { type: "attack", value: 16 };
+    },
+    rewards: {
+      credits: 68,
+      cardChoices: 3,
+      cardPool: "uncommon"
+    },
+    spriteKey: "ice_striker",
+    description: "Act 3 heavy defender. Balances offense and defense."
+  },
+
+  ice_assassin: {
+    id: "ice_assassin",
+    name: "Assassin ICE",
+    type: "sentry",
+    tier: 2,
+    maxHP: 65,
+    intentPool: [
+      { type: "attack", value: 18, weight: 60 },
+      { type: "multiAttack", value: 9, hits: 2, weight: 30 },
+      { type: "applyStatus", status: "vulnerable", stacks: 2, weight: 10 }
+    ],
+    aiLogic: function(gameState) {
+      if (!gameState || !gameState.player) {
+        console.error('[iceDefinitions] ice_assassin.aiLogic: Invalid gameState');
+        return { type: "attack", value: 18 };
+      }
+      
+      const playerBlock = gameState.player.block || 0;
+      
+      if (playerBlock < 5) {
+        if (GAME_CONFIG.DEBUG_MODE && GAME_CONFIG.LOG_VERBOSE) {
+          console.log('[iceDefinitions] ice_assassin.aiLogic: Low player block, multi-attack');
+        }
+        return { type: "multiAttack", value: 10, hits: 2 };
+      }
+      
+      const selectedIntent = weightedRandom(
+        this.intentPool.map(intent => ({ value: intent, weight: intent.weight }))
+      );
+      
+      return selectedIntent || { type: "attack", value: 18 };
+    },
+    rewards: {
+      credits: 72,
+      cardChoices: 3,
+      cardPool: "uncommon"
+    },
+    spriteKey: "ice_phantom",
+    description: "Act 3 aggressive striker. Punishes low block with multi-attacks."
+  },
   ice_firewall_boss: {
     id: "ice_firewall_boss",
     name: "Mega-Firewall",
@@ -789,7 +874,7 @@ try {
 export const ICE_BY_TIER = {
   tier1: Object.values(ICE_LIBRARY).filter(ice => ice.tier === 1),
   tier2: Object.values(ICE_LIBRARY).filter(ice => ice.tier === 2 && ice.type !== 'boss'),
-  tier3: Object.values(ICE_LIBRARY).filter(ice => ice.tier === 3 || ice.type === 'boss')
+  tier3: Object.values(ICE_LIBRARY).filter(ice => ice.tier === 2 && ice.type !== 'boss')
 };
 
 export const BOSSES = Object.values(ICE_LIBRARY).filter(ice => ice.type === 'boss');

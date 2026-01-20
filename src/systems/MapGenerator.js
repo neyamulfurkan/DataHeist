@@ -650,6 +650,7 @@ export class MapGenerator {
   getEnemyPoolForNode(nodeType, actNumber) {
     const validAct = clamp(actNumber, 1, 3);
     
+    // Elite nodes ALWAYS use tier 2 enemies (Act 2-3 difficulty)
     if (nodeType === 'elite') {
       const tier2Enemies = ICE_BY_TIER.tier2 || [];
       if (tier2Enemies.length === 0) {
@@ -659,7 +660,9 @@ export class MapGenerator {
       return tier2Enemies.map(ice => ice.id);
     }
     
-    const tierKey = `tier${validAct}`;
+    // Regular combat nodes: use tier matching act number
+    // Act 1 = tier1, Act 2-3 = tier2 (NO BOSSES)
+    const tierKey = validAct === 1 ? 'tier1' : 'tier2';
     const tierEnemies = ICE_BY_TIER[tierKey] || [];
     
     if (tierEnemies.length === 0) {
