@@ -161,7 +161,7 @@ export default class BootScene extends Phaser.Scene {
     console.log('[BootScene] Setting up load event listeners...');
     
     // Increase parallel downloads for faster loading (default is 4, max recommended is 32)
-    this.load.setMaxParallelDownloads(32);
+    this.load.maxParallelDownloads = 32;
     console.log('[BootScene] Parallel downloads set to 32 for maximum speed');
     
     this.load.on('progress', (progress) => {
