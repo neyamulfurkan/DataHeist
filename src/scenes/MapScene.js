@@ -114,11 +114,18 @@ export default class MapScene extends Phaser.Scene {
         this.initializeNewRun();
       }
 
+      // CRITICAL: If boss was defeated, show act transition overlay
+      if (data.bossDefeated && this.runState.actNumber > 1) {
+        console.log('[MapScene] init: Boss defeated, showing act transition to Act', this.runState.actNumber);
+        this.showActTransition = true;
+      }
+
       console.log('[MapScene] init: ✅ Initialization complete', {
         runner: this.runner.name,
         actNumber: this.runState.actNumber,
         credits: this.runState.credits,
-        completedNodeId: this.completedNodeId
+        completedNodeId: this.completedNodeId,
+        showActTransition: this.showActTransition || false
       });
 
     } catch (error) {
@@ -309,6 +316,14 @@ loadExistingRun() {
 
       this.createHUD();
       this.createPauseMenu();
+
+      // Show act transition overlay if boss was defeated
+      if (this.showActTransition) {
+        this.time.delayedCall(500, () => {
+          this.displayActTransitionOverlay(this.runState.actNumber);
+        });
+        this.showActTransition = false;
+      }
 
       // Enable input for the scene
       this.input.setDefaultCursor('default');
@@ -513,6 +528,74 @@ loadExistingRun() {
       console.error('[MapScene] createHUD: Error name:', error.name);
       console.error('[MapScene] createHUD: Error message:', error.message);
     }
+  }
+
+  /**
+   * Display "ACT X UNLOCKED" transition overlay
+   * @param {number} actNumber - New act number
+   */
+  displayActTransitionOverlay(actNumber) {
+    console.log('[MapScene] displayActTransitionOverlay: Showing Act', actNumber, 'transition');
+    
+    const centerX = GAME_CONFIG.PHASER.WIDTH / 2;
+    const centerY = GAME_CONFIG.PHASER.HEIGHT / 2;
+    
+    // Dark overlay
+    const overlay = this.add.rectangle(
+      centerX, centerY,
+      GAME_CONFIG.PHASER.WIDTH, GAME_CONFIG.PHASER.HEIGHT,
+      0x000000, 0.9
+    );
+    overlay.setDepth(GAME_CONFIG.UI.Z_INDEX.MODALS);
+    
+    // Act title
+    const actText = this.add.text(centerX, centerY - 50, `ACT ${actNumber}`, {
+      fontSize: '72px',
+      color: GAME_CONFIG.UI.COLORS.CYAN_PRIMARY,
+      fontFamily: GAME_CONFIG.UI.TEXT.FONT_FAMILY,
+      fontStyle: 'bold',
+      stroke: '#000000',
+      strokeThickness: 8
+    });
+    actText.setOrigin(0.5);
+    actText.setDepth(GAME_CONFIG.UI.Z_INDEX.MODALS + 1);
+    actText.setAlpha(0);
+    
+    // Subtitle
+    const subtitle = this.add.text(centerX, centerY + 30, 'UNLOCKED', {
+      fontSize: '36px',
+      color: GAME_CONFIG.UI.COLORS.GREEN_SUCCESS,
+      fontFamily: GAME_CONFIG.UI.TEXT.FONT_FAMILY,
+      fontStyle: 'bold'
+    });
+    subtitle.setOrigin(0.5);
+    subtitle.setDepth(GAME_CONFIG.UI.Z_INDEX.MODALS + 1);
+    subtitle.setAlpha(0);
+    
+    // Animate in
+    this.tweens.add({
+      targets: [actText, subtitle],
+      alpha: 1,
+      duration: 800,
+      ease: 'Power2'
+    });
+    
+    // Fade out after 2.5 seconds
+    this.time.delayedCall(2500, () => {
+      this.tweens.add({
+        targets: [overlay, actText, subtitle],
+        alpha: 0,
+        duration: 600,
+        ease: 'Power2',
+        onComplete: () => {
+          overlay.destroy();
+          actText.destroy();
+          subtitle.destroy();
+        }
+      });
+    });
+    
+    audioManager.playSound('sfx_victory', 0.8);
   }
 
   updateHUD() {

@@ -2170,7 +2170,8 @@ createPersistentShield(x, y, isPlayer) {
         cardChoices: cardChoices,
         encounterType: this.isBossCombat ? 'boss' : (this.isEliteCombat ? 'elite' : 'combat'),
         bonusRewards: [],
-        relic: earnedRelic  // FIXED: Use actual relic object
+        relic: earnedRelic,  // FIXED: Use actual relic object
+        bossId: this.isBossCombat ? this.enemy.id : null  // NEW: Pass boss ID
       };
 
       console.log('[BattleScene] handleVictory: Formatted rewards:', formattedRewards);

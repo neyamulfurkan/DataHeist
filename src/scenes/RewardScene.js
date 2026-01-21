@@ -780,13 +780,50 @@ displayCardChoices() {
       });
     }
 
+    // CRITICAL FIX: If boss was defeated, increment act number
+    const wasBossDefeated = this.rewards.encounterType === 'boss';
+    const currentAct = this.mapState.actNumber || 1;
+    const nextAct = wasBossDefeated ? Math.min(currentAct + 1, 3) : currentAct;
+    
+    console.log('[RewardScene] returnToMap: Boss defeated?', wasBossDefeated, 'Current act:', currentAct, 'Next act:', nextAct);
+    
+    // If Act 3 boss defeated, go to VictoryScene instead
+    if (wasBossDefeated && currentAct >= 3) {
+      console.log('[RewardScene] returnToMap: Final boss defeated! Going to VictoryScene');
+      
+      audioManager.stopMusic(true);
+      
+      this.scene.start('VictoryScene', {
+        runData: {
+          ...this.mapState,
+          victory: true,
+          bossDefeated: this.rewards.bossId || 'unknown',
+          credits: this.mapState.credits,
+          finalDeckSize: this.runner.deck.getAllCards().length,
+          finalRelics: this.runner.relics?.length || 0
+        },
+        actNumber: currentAct,
+        isFullRunComplete: true,
+        creditsEarned: this.rewards.credits
+      });
+      return;
+    }
+    
+    // Update run state with new act number
+    const updatedRunState = {
+      ...this.mapState,
+      actNumber: nextAct,
+      completedActs: [...(this.mapState.completedActs || []), currentAct]
+    };
+    
     const sceneData = {
       runner: this.runner,
-      runState: this.mapState,
-      completedNodeId: this.nodeId,  // CRITICAL: Pass the node that was just completed
+      runState: updatedRunState,
+      completedNodeId: this.nodeId,
       fromReward: true,
       creditsEarned: this.rewards.credits,
-      cardAdded: this.selectedCard?.name || 'none'
+      cardAdded: this.selectedCard?.name || 'none',
+      bossDefeated: wasBossDefeated  // NEW: Flag that boss was defeated
     };
 
     console.log('[RewardScene] returnToMap: Transitioning to MapScene with data:', {
