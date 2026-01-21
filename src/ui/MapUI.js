@@ -617,9 +617,8 @@ try {
           icon.setTint(0x666666);
         }
         
-        if (bg.input) {
-          bg.disableInteractive();
-        }
+        // DON'T disable interactive - just make it visually locked
+        // This prevents issues when toggling back to available
         
         if (glow) {
           glow.setVisible(false);
