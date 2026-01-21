@@ -368,44 +368,53 @@ try {
       // Set up interactivity - simple hitbox works best
       bg.setInteractive({ useHandCursor: true });
 
-      bg.on('pointerover', () => {
-        try {
-          this.onNodeHover(node);
-          if (node.available && !node.visited && !node.cleared) {
-            glow.setVisible(true);
+      // Store bound event handlers for proper cleanup
+      const handlers = {
+        pointerover: () => {
+          try {
+            this.onNodeHover(node);
+            if (node.available && !node.visited && !node.cleared) {
+              glow.setVisible(true);
+            }
+          } catch (error) {
+            console.error('[MapUI] createNodeSprite: Error in pointerover handler', {
+              nodeId: node.id,
+              error: error.message
+            });
           }
-        } catch (error) {
-          console.error('[MapUI] createNodeSprite: Error in pointerover handler', {
-            nodeId: node.id,
-            error: error.message
-          });
-        }
-      });
-
-      bg.on('pointerout', () => {
-        try {
-          this.onNodeOut(node);
-          if (this.nodeSprites.get(node.id)?.getData('state') !== 'available') {
-            glow.setVisible(false);
+        },
+        pointerout: () => {
+          try {
+            this.onNodeOut(node);
+            if (this.nodeSprites.get(node.id)?.getData('state') !== 'available') {
+              glow.setVisible(false);
+            }
+          } catch (error) {
+            console.error('[MapUI] createNodeSprite: Error in pointerout handler', {
+              nodeId: node.id,
+              error: error.message
+            });
           }
-        } catch (error) {
-          console.error('[MapUI] createNodeSprite: Error in pointerout handler', {
-            nodeId: node.id,
-            error: error.message
-          });
+        },
+        pointerdown: () => {
+          try {
+            this.onNodeClick(node);
+          } catch (error) {
+            console.error('[MapUI] createNodeSprite: Error in pointerdown handler', {
+              nodeId: node.id,
+              error: error.message
+            });
+          }
         }
-      });
+      };
 
-      bg.on('pointerdown', () => {
-        try {
-          this.onNodeClick(node);
-        } catch (error) {
-          console.error('[MapUI] createNodeSprite: Error in pointerdown handler', {
-            nodeId: node.id,
-            error: error.message
-          });
-        }
-      });
+      // Store handlers for later use
+      bg.setData('handlers', handlers);
+
+      // Attach handlers
+      bg.on('pointerover', handlers.pointerover);
+      bg.on('pointerout', handlers.pointerout);
+      bg.on('pointerdown', handlers.pointerdown);
 
       // Store references in the container for state management
       container.setData('node', node);
@@ -562,56 +571,26 @@ try {
           icon.clearTint();
         }
         
-        // CRITICAL: Always recreate interactive area fresh for available nodes
-        if (bg.input) {
-          bg.removeInteractive();
-          bg.removeAllListeners();
+        // CRITICAL: Reuse stored event handlers instead of creating new ones
+        const handlers = bg.getData('handlers');
+        
+        if (!bg.input) {
+          bg.setInteractive({ useHandCursor: true });
         }
-        bg.setInteractive({ useHandCursor: true });
         
-        // CRITICAL: Reattach all event handlers
-        bg.off('pointerover');
-        bg.off('pointerout');
-        bg.off('pointerdown');
-        
-        bg.on('pointerover', () => {
-          try {
-            this.onNodeHover(node);
-            if (node.available && !node.visited && !node.cleared) {
-              glow.setVisible(true);
-            }
-          } catch (error) {
-            console.error('[MapUI] setNodeState: Error in pointerover handler', {
-              nodeId: node.id,
-              error: error.message
-            });
-          }
-        });
-
-        bg.on('pointerout', () => {
-          try {
-            this.onNodeOut(node);
-            if (this.nodeSprites.get(node.id)?.getData('state') !== 'available') {
-              glow.setVisible(false);
-            }
-          } catch (error) {
-            console.error('[MapUI] setNodeState: Error in pointerout handler', {
-              nodeId: node.id,
-              error: error.message
-            });
-          }
-        });
-
-        bg.on('pointerdown', () => {
-          try {
-            this.onNodeClick(node);
-          } catch (error) {
-            console.error('[MapUI] setNodeState: Error in pointerdown handler', {
-              nodeId: node.id,
-              error: error.message
-            });
-          }
-        });
+        if (handlers) {
+          // Remove old handlers first
+          bg.off('pointerover');
+          bg.off('pointerout');
+          bg.off('pointerdown');
+          
+          // Reattach stored handlers
+          bg.on('pointerover', handlers.pointerover);
+          bg.on('pointerout', handlers.pointerout);
+          bg.on('pointerdown', handlers.pointerdown);
+        } else {
+          console.warn('[MapUI] setNodeState: No handlers stored for node', nodeId);
+        }
         
         if (glow) {
           glow.setVisible(true);
