@@ -64,10 +64,10 @@ export const CARD_LIBRARY = {
     cost: 1,
     rarity: "common",
     effects: [
-      { type: "damage", target: "enemy", value: 6 }
+      { type: "damage", target: "enemy", value: 5 }
     ],
-    description: "Deal 6 damage.",
-    upgradeEffect: { type: "damage", value: 9 },
+    description: "Deal 5 damage.",
+    upgradeEffect: { type: "damage", value: 8 },
     spriteKey: "card_exploit_009",
     keywords: [],
     isExhaust: false,
@@ -99,10 +99,10 @@ export const CARD_LIBRARY = {
     cost: 1,
     rarity: "common",
     effects: [
-      { type: "damage", target: "enemy", value: 9 }
+      { type: "damage", target: "enemy", value: 7 }
     ],
-    description: "Deal 9 damage.",
-    upgradeEffect: { type: "damage", value: 13 },
+    description: "Deal 7 damage.",
+    upgradeEffect: { type: "damage", value: 10 },
     spriteKey: "card_exploit_003",
     keywords: [],
     isExhaust: false,
@@ -169,10 +169,10 @@ export const CARD_LIBRARY = {
     cost: 2,
     rarity: "common",
     effects: [
-      { type: "damage", target: "enemy", value: 12 }
+      { type: "damage", target: "enemy", value: 10 }
     ],
-    description: "Deal 12 damage.",
-    upgradeEffect: { type: "damage", value: 16 },
+    description: "Deal 10 damage.",
+    upgradeEffect: { type: "damage", value: 14 },
     spriteKey: "card_exploit_007",
     keywords: [],
     isExhaust: false,
@@ -208,10 +208,10 @@ export const CARD_LIBRARY = {
     cost: 1,
     rarity: "common",
     effects: [
-      { type: "block", target: "self", value: 5 }
+      { type: "block", target: "self", value: 4 }
     ],
-    description: "Gain 5 Block.",
-    upgradeEffect: { type: "block", value: 8 },
+    description: "Gain 4 Block.",
+    upgradeEffect: { type: "block", value: 6 },
     spriteKey: "card_defense_002",
     keywords: [],
     isExhaust: false,

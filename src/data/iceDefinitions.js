@@ -35,9 +35,9 @@ export const ICE_LIBRARY = {
     tier: 1,
     maxHP: 42,
     intentPool: [
-      { type: "attack", value: 10, weight: 60 },
-      { type: "defend", value: 8, weight: 20 },
-      { type: "trace", value: 6, weight: 20 }
+      { type: "attack", value: 14, weight: 70 },
+      { type: "defend", value: 8, weight: 15 },
+      { type: "trace", value: 8, weight: 15 }
     ],
     aiLogic: function(gameState) {
       if (!gameState || !gameState.player) {
@@ -76,9 +76,9 @@ export const ICE_LIBRARY = {
     tier: 1,
     maxHP: 35,
     intentPool: [
-      { type: "attack", value: 14, weight: 60 },
-      { type: "attack", value: 8, weight: 25 },
-      { type: "trace", value: 6, weight: 15 }
+      { type: "attack", value: 18, weight: 70 },
+      { type: "attack", value: 10, weight: 20 },
+      { type: "trace", value: 10, weight: 10 }
     ],
     aiLogic: function(gameState) {
       if (!gameState || !gameState.player || !gameState.enemy) {
@@ -122,8 +122,8 @@ export const ICE_LIBRARY = {
     tier: 1,
     maxHP: 30,
     intentPool: [
-      { type: "attack", value: 7, weight: 25 },
-      { type: "trace", value: 15, weight: 75 }
+      { type: "attack", value: 10, weight: 30 },
+      { type: "trace", value: 20, weight: 70 }
     ],
     aiLogic: function(gameState) {
       if (!gameState || !gameState.player) {
@@ -169,9 +169,9 @@ export const ICE_LIBRARY = {
     tier: 1,
     maxHP: 45,
     intentPool: [
-      { type: "attack", value: 7, weight: 40 },
-      { type: "defend", value: 10, weight: 50 },
-      { type: "defend", value: 15, weight: 10 }
+      { type: "attack", value: 12, weight: 45 },
+      { type: "defend", value: 12, weight: 45 },
+      { type: "defend", value: 18, weight: 10 }
     ],
     aiLogic: function(gameState) {
       if (!gameState || !gameState.enemy) {
@@ -219,9 +219,9 @@ export const ICE_LIBRARY = {
     tier: 2,
     maxHP: 65,
     intentPool: [
-      { type: "attack", value: 15, weight: 50 },
-      { type: "defend", value: 12, weight: 25 },
-      { type: "applyStatus", status: "weak", stacks: 2, weight: 25 }
+      { type: "attack", value: 20, weight: 60 },
+      { type: "defend", value: 14, weight: 20 },
+      { type: "applyStatus", status: "weak", stacks: 2, weight: 20 }
     ],
     aiLogic: function(gameState) {
       if (!gameState || !gameState.cardsPlayedThisTurn) {
@@ -285,9 +285,9 @@ export const ICE_LIBRARY = {
     tier: 2,
     maxHP: 55,
     intentPool: [
-      { type: "attack", value: 9, weight: 40 },
-      { type: "applyStatus", status: "vulnerable", stacks: 2, weight: 35 },
-      { type: "applyStatus", status: "weak", stacks: 1, weight: 25 }
+      { type: "attack", value: 16, weight: 50 },
+      { type: "applyStatus", status: "vulnerable", stacks: 2, weight: 30 },
+      { type: "applyStatus", status: "weak", stacks: 1, weight: 20 }
     ],
     aiLogic: function(gameState) {
       if (!gameState || !gameState.player || !gameState.player.statusEffects) {
@@ -535,23 +535,23 @@ export const ICE_LIBRARY = {
       {
         hpThreshold: 120,
         intentPool: [
-          { type: "attack", value: 18, weight: 70 },
-          { type: "defend", value: 15, weight: 30 }
+          { type: "attack", value: 24, weight: 75 },
+          { type: "defend", value: 18, weight: 25 }
         ]
       },
       {
         hpThreshold: 50,
         intentPool: [
-          { type: "attack", value: 20, weight: 50 },
-          { type: "trace", value: 10, weight: 30 },
+          { type: "attack", value: 28, weight: 55 },
+          { type: "trace", value: 15, weight: 25 },
           { type: "applyStatus", status: "vulnerable", stacks: 2, weight: 20 }
         ]
       },
       {
         hpThreshold: 0,
         intentPool: [
-          { type: "multiAttack", value: 10, hits: 3, weight: 60 },
-          { type: "trace", value: 15, weight: 40 }
+          { type: "multiAttack", value: 15, hits: 3, weight: 65 },
+          { type: "trace", value: 20, weight: 35 }
         ]
       }
     ],

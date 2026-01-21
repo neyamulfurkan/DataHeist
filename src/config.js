@@ -108,9 +108,9 @@ export const GAME_CONFIG = {
   // ============================================================================
   COMBAT: {
     // Damage Multipliers
-    WEAK_MULTIPLIER: 0.70,
-    VULNERABLE_MULTIPLIER: 1.4,
-    STRENGTH_BONUS_PER_STACK: 1,
+    WEAK_MULTIPLIER: 0.75,
+    VULNERABLE_MULTIPLIER: 1.5,
+    STRENGTH_BONUS_PER_STACK: 2,
     DEXTERITY_BLOCK_BONUS_PER_STACK: 1,
     
     // Minimum Values
