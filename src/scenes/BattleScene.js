@@ -182,8 +182,8 @@ export default class BattleScene extends Phaser.Scene {
     try {
       this.createBackground();
       this.createEnemyVisuals();
-      this.initializeCombat();  // MOVED BEFORE initializeUI
-      this.initializeUI();
+      this.initializeUI();  // MUST come FIRST
+      this.initializeCombat();  // THEN initialize combat
       this.setupEventListeners();
       this.createCombatLog();
       this.createForfeitButton();
@@ -518,8 +518,13 @@ export default class BattleScene extends Phaser.Scene {
       this.hudElements.updateTurn(1, 'playerTurn');
       this.hudElements.updateEnemyHP(this.enemy.currentHP, this.enemy.maxHP, this.enemy.name);
       
-      // CRITICAL: Update enemy intent NOW (after HUD exists)
-      this.hudElements.updateEnemyIntent(this.enemy.currentIntent);
+      // CRITICAL: Update enemy intent NOW (after HUD exists) - only if combat is initialized
+      if (this.enemy && this.enemy.currentIntent) {
+        this.hudElements.updateEnemyIntent(this.enemy.currentIntent);
+        console.log('[BattleScene] initializeUI: Enemy intent set in HUD');
+      } else {
+        console.warn('[BattleScene] initializeUI: Enemy intent not yet available');
+      }
       
       // Show combat log messages (moved from initializeCombat)
       if (this.runner.relics && this.runner.relics.length > 0) {
@@ -537,7 +542,11 @@ export default class BattleScene extends Phaser.Scene {
       }
       
       this.showCombatLog(`Combat Start: ${this.runner.name} vs ${this.enemy.name}`);
-      this.showCombatLog(`Enemy Intent: ${this.enemy.getIntentDescription()}`);
+      
+      // CRITICAL FIX: Only show intent if it exists
+      if (this.enemy && this.enemy.currentIntent) {
+        this.showCombatLog(`Enemy Intent: ${this.enemy.getIntentDescription()}`);
+      }
 
       console.log('[BattleScene] initializeUI: UI initialization complete');
 
@@ -639,6 +648,14 @@ export default class BattleScene extends Phaser.Scene {
         playerMaxCPU: this.gameState.player.maxCPU,
         enemyIntent: this.enemy.getIntentDescription()
       });
+      
+      // CRITICAL FIX: Update HUD ONLY if it exists (after initializeUI is called)
+      if (this.hudElements) {
+        this.hudElements.updateEnemyIntent(this.enemy.currentIntent);
+        console.log('[BattleScene] initializeCombat: Enemy intent updated in HUD');
+      } else {
+        console.log('[BattleScene] initializeCombat: HUD not yet created, intent will be set later');
+      }
 
     } catch (error) {
       console.error('[BattleScene] initializeCombat: Failed to initialize combat', {
