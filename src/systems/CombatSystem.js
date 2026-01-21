@@ -308,6 +308,8 @@ const upgradeableCards = deck.filter(c => c.upgradeLevel < GAME_CONFIG.CARDS.MAX
 
     player.incrementTurn();
     
+    // CRITICAL FIX: Ensure relics are set before triggering
+    relicSystem.setRelics(player.relics || []);
     relicSystem.trigger('onTurnStart', { gameState: this.gameState });
     
     const relicEffects = relicSystem.getAggregatedEffects();
@@ -409,6 +411,9 @@ const upgradeableCards = deck.filter(c => c.upgradeLevel < GAME_CONFIG.CARDS.MAX
     }
 
     relicSystem.trigger('onCardPlay', { card, gameState: this.gameState });
+    
+    // CRITICAL FIX: Ensure relics are set before getting effects
+    relicSystem.setRelics(player.relics || []);
     
     let actualCost = card.getActualCost ? card.getActualCost(this.gameState) : card.cost;
     
@@ -1120,6 +1125,8 @@ _executeTraceReductionEffect(effect, card, gameState) {
     let finalDamage = baseDamage;
     
     if (source === this.gameState?.player) {
+      // CRITICAL FIX: Ensure relics are set before triggering
+      relicSystem.setRelics(source.relics || []);
       relicSystem.trigger('onDamageDealt', { damage: finalDamage, target, source, gameState: this.gameState });
       
       const relicEffects = relicSystem.getAggregatedEffects();
@@ -1333,6 +1340,8 @@ _executeTraceReductionEffect(effect, card, gameState) {
     let finalBlock = baseBlock;
     
     if (target === this.gameState?.player) {
+      // CRITICAL FIX: Ensure relics are set before triggering
+      relicSystem.setRelics(target.relics || []);
       relicSystem.trigger('onBlockGained', { block: finalBlock, target, gameState: this.gameState });
       
       const relicEffects = relicSystem.getAggregatedEffects();
@@ -1595,6 +1604,8 @@ applyStatus(type, stacks, duration, target, sourceDescription = 'unknown') {
 
    player.deck.resetTurn();
     
+    // CRITICAL FIX: Ensure relics are set before triggering
+    relicSystem.setRelics(player.relics || []);
     relicSystem.trigger('onTurnEnd', { gameState: this.gameState });
     
     const relicEffects = relicSystem.getAggregatedEffects();
