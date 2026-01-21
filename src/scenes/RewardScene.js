@@ -423,13 +423,15 @@ displayCardChoices() {
         name.setOrigin(0.5);
         container.add(name);
 
-        // Relic Description
-        const desc = this.add.text(0, 55, relic.description, {
+        // Relic Description - Make it more prominent
+        const desc = this.add.text(0, 55, relic.description || 'No description', {
           fontFamily: GAME_CONFIG.UI.TEXT.FONT_FAMILY,
-          fontSize: '14px',
-          color: '#cccccc',
+          fontSize: '13px',
+          color: '#ffffff',
           align: 'center',
-          wordWrap: { width: 200 }
+          fontStyle: 'bold',
+          wordWrap: { width: 200 },
+          lineSpacing: 2
         });
         desc.setOrigin(0.5);
         container.add(desc);

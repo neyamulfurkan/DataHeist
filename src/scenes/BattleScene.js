@@ -496,6 +496,14 @@ export default class BattleScene extends Phaser.Scene {
       this.hudElements.create();
       console.log('[BattleScene] initializeUI: HUDElements created');
 
+      // CRITICAL: Use CURRENT runner values (which may have been modified by relics)
+      console.log('[BattleScene] initializeUI: Setting initial HUD values:', {
+        currentTrace: this.runner.currentTrace,
+        maxTrace: this.runner.maxTrace,
+        currentCPU: this.runner.currentCPU,
+        maxCPU: this.runner.maxCPU
+      });
+      
       this.hudElements.updateTraceMeter(this.runner.currentTrace, this.runner.maxTrace);
       this.hudElements.updateCPU(this.runner.currentCPU, this.runner.maxCPU);
       this.hudElements.updateTurn(1, 'playerTurn');
@@ -525,52 +533,48 @@ export default class BattleScene extends Phaser.Scene {
         this.applyProgressiveScaling(this.enemy, this.nodeData, this.actNumber);
       }
       
-      this.gameState = combatSystem.initCombat(this.runner, this.enemy, this.events);
-
-      // CRITICAL FIX: Apply relic effects at combat start
+      // CRITICAL FIX: Apply relic effects to runner BEFORE initializing combat system
       if (this.runner.relics && this.runner.relics.length > 0) {
-        console.log('[BattleScene] initializeCombat: Applying relic effects', {
+        console.log('[BattleScene] initializeCombat: Pre-applying relic effects to runner BEFORE combat init', {
           relicCount: this.runner.relics.length,
-          relics: this.runner.relics.map(r => r.name)
+          relics: this.runner.relics.map(r => r.name),
+          beforeMaxCPU: this.runner.maxCPU,
+          beforeCurrentCPU: this.runner.currentCPU,
+          beforeMaxTrace: this.runner.maxTrace
         });
         
         relicSystem.setRelics(this.runner.relics);
-        
-        const combatStartEffects = relicSystem.trigger('onCombatStart', {
-          runner: this.runner,
-          enemy: this.enemy,
-          gameState: this.gameState
-        });
-        
-        // Apply aggregated effects
         const effects = relicSystem.getAggregatedEffects();
         
+        // Apply CPU bonus BEFORE combat system sees the runner
         if (effects.bonusStartingCPU > 0) {
           this.runner.maxCPU += effects.bonusStartingCPU;
           this.runner.currentCPU = this.runner.maxCPU;
-          console.log('[BattleScene] initializeCombat: ✅ Relic bonus CPU applied, new max:', this.runner.maxCPU);
-          this.showCombatLog(`Relic: +${effects.bonusStartingCPU} Max CPU!`);
+          console.log('[BattleScene] initializeCombat: ✅ Applied +' + effects.bonusStartingCPU + ' Max CPU BEFORE init');
         }
         
+        // Apply max trace increase BEFORE combat init
         if (effects.maxTraceIncrease > 0) {
           this.runner.maxTrace += effects.maxTraceIncrease;
-          console.log('[BattleScene] initializeCombat: ✅ Relic max trace increase:', effects.maxTraceIncrease);
-          this.showCombatLog(`Relic: +${effects.maxTraceIncrease} Max Trace!`);
+          console.log('[BattleScene] initializeCombat: ✅ Applied +' + effects.maxTraceIncrease + ' Max Trace BEFORE init');
         }
         
+        // Apply starting block BEFORE combat init
         if (effects.startingBlock > 0) {
           this.runner.block = effects.startingBlock;
-          console.log('[BattleScene] initializeCombat: ✅ Relic starting block:', effects.startingBlock);
-          this.showCombatLog(`Relic: Start with ${effects.startingBlock} Block!`);
+          console.log('[BattleScene] initializeCombat: ✅ Applied ' + effects.startingBlock + ' starting Block BEFORE init');
         }
         
-        // Update HUD with relic-modified values
-        this.hudElements.updateCPU(this.runner.currentCPU, this.runner.maxCPU);
-        this.hudElements.updateTraceMeter(this.runner.currentTrace, this.runner.maxTrace);
-        if (effects.startingBlock > 0) {
-          this.hudElements.updateBlockDisplays(this.runner.block, this.enemy.block);
-        }
+        console.log('[BattleScene] initializeCombat: Relic effects applied', {
+          afterMaxCPU: this.runner.maxCPU,
+          afterCurrentCPU: this.runner.currentCPU,
+          afterMaxTrace: this.runner.maxTrace,
+          afterBlock: this.runner.block
+        });
       }
+      
+      // NOW initialize combat with the modified runner
+      this.gameState = combatSystem.initCombat(this.runner, this.enemy, this.events);
 
       console.log('[BattleScene] initializeCombat: Combat system initialized', {
         turn: this.gameState.turn,
@@ -579,6 +583,21 @@ export default class BattleScene extends Phaser.Scene {
         playerMaxCPU: this.gameState.player.maxCPU,
         enemyIntent: this.gameState.enemy.getIntentDescription()
       });
+
+      // Show relic messages in combat log
+      if (this.runner.relics && this.runner.relics.length > 0) {
+        const effects = relicSystem.getAggregatedEffects();
+        
+        if (effects.bonusStartingCPU > 0) {
+          this.showCombatLog(`Relic: +${effects.bonusStartingCPU} Max CPU!`);
+        }
+        if (effects.maxTraceIncrease > 0) {
+          this.showCombatLog(`Relic: +${effects.maxTraceIncrease} Max Trace!`);
+        }
+        if (effects.startingBlock > 0) {
+          this.showCombatLog(`Relic: Start with ${effects.startingBlock} Block!`);
+        }
+      }
 
       // CRITICAL FIX: Update intent display immediately
       this.hudElements.updateEnemyIntent(this.enemy.currentIntent);

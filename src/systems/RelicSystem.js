@@ -57,8 +57,8 @@ class RelicSystem {
       if (relic.hasTrigger(triggerType)) {
         const effects = relic.trigger(triggerType, context);
         if (effects) {
-          // CRITICAL FIX: Actually APPLY the effects instead of just storing them
-          this._applyRelicEffects(effects, triggerType, context);
+          // DON'T apply here - let BattleScene handle application
+          // This prevents double-application bugs
           
           triggeredEffects.push({
             relicId: relic.id,
