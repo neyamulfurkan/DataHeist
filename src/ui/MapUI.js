@@ -565,8 +565,53 @@ try {
         // CRITICAL: Always recreate interactive area fresh for available nodes
         if (bg.input) {
           bg.removeInteractive();
+          bg.removeAllListeners();
         }
         bg.setInteractive({ useHandCursor: true });
+        
+        // CRITICAL: Reattach all event handlers
+        bg.off('pointerover');
+        bg.off('pointerout');
+        bg.off('pointerdown');
+        
+        bg.on('pointerover', () => {
+          try {
+            this.onNodeHover(node);
+            if (node.available && !node.visited && !node.cleared) {
+              glow.setVisible(true);
+            }
+          } catch (error) {
+            console.error('[MapUI] setNodeState: Error in pointerover handler', {
+              nodeId: node.id,
+              error: error.message
+            });
+          }
+        });
+
+        bg.on('pointerout', () => {
+          try {
+            this.onNodeOut(node);
+            if (this.nodeSprites.get(node.id)?.getData('state') !== 'available') {
+              glow.setVisible(false);
+            }
+          } catch (error) {
+            console.error('[MapUI] setNodeState: Error in pointerout handler', {
+              nodeId: node.id,
+              error: error.message
+            });
+          }
+        });
+
+        bg.on('pointerdown', () => {
+          try {
+            this.onNodeClick(node);
+          } catch (error) {
+            console.error('[MapUI] setNodeState: Error in pointerdown handler', {
+              nodeId: node.id,
+              error: error.message
+            });
+          }
+        });
         
         if (glow) {
           glow.setVisible(true);
