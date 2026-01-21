@@ -192,6 +192,10 @@ loadExistingRun() {
       console.error('[MapScene] loadExistingRun: Missing seed in runState');
       this.runState.seed = Date.now();
     }
+    
+    if (!this.runState.clearedNodes) {
+      this.runState.clearedNodes = [];
+    }
 
     if (!this.runState.actNumber) {
       console.warn('[MapScene] loadExistingRun: Missing actNumber, defaulting to 1');
@@ -199,15 +203,6 @@ loadExistingRun() {
     }
 
     try {
-      // CRITICAL FIX: Check if this is a new act (no cleared nodes)
-      const isNewAct = !this.runState.clearedNodes || this.runState.clearedNodes.length === 0;
-      
-      if (isNewAct) {
-        console.log('[MapScene] loadExistingRun: New act detected, generating fresh map for Act', this.runState.actNumber);
-        this.generateNewMap();
-        return;
-      }
-      
       console.log('[MapScene] loadExistingRun: Regenerating map from seed:', this.runState.seed);
       const mapData = generateMap(this.runState.actNumber, this.runState.seed + this.runState.actNumber);
       
@@ -351,12 +346,13 @@ loadExistingRun() {
         const completedNode = this.mapData.nodes.find(n => n.id === this.completedNodeId);
         
         if (completedNode) {
-          // Mark node as completed
           completedNode.cleared = true;
           completedNode.visited = true;
           completedNode.available = false;
           
-          // Add to cleared nodes list
+          if (!Array.isArray(this.runState.clearedNodes)) {
+            this.runState.clearedNodes = [];
+          }
           if (!this.runState.clearedNodes.includes(completedNode.id)) {
             this.runState.clearedNodes.push(completedNode.id);
           }
@@ -1497,7 +1493,6 @@ showRelicTooltip(relic, x, y) {
     }
 
     try {
-      // Step 1: Mark cleared nodes as visited (with checkmark)
       this.mapData.nodes.forEach(node => {
         if (node.cleared) {
           node.available = false;
@@ -1507,7 +1502,6 @@ showRelicTooltip(relic, x, y) {
         }
       });
 
-      // Step 2: Enable ALL connected nodes from current position
       if (this.currentNode.connections && this.currentNode.connections.length > 0) {
         console.log('[MapScene] updateAvailableNodes: Enabling connections from', this.currentNode.id);
         

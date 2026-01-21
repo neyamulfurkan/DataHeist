@@ -466,11 +466,11 @@ class SaveSystem {
         seed: runData.map.seed,
         actNumber: runData.map.actNumber,
         currentNodeId: runData.map.currentNodeId,
-        visitedNodes: runData.map.visitedNodes || [],
-        clearedNodes: runData.map.clearedNodes || []
+        visitedNodes: Array.isArray(runData.map.visitedNodes) ? runData.map.visitedNodes : [],
+        clearedNodes: Array.isArray(runData.map.clearedNodes) ? runData.map.clearedNodes : []
       } : null,
       credits: runData.credits || 0,
-      relics: relicsToSave.map(r => r.toJSON ? r.toJSON() : r), // Serialize relic objects
+      relics: relicsToSave.map(r => r.toJSON ? r.toJSON() : r),
       actNumber: runData.actNumber || 1,
       totalTurns: runData.totalTurns || 0,
       combatsWon: runData.combatsWon || 0
