@@ -605,7 +605,7 @@
       console.log('[index.html] Attempting to load main.js module...');
       
       try {
-        import('../src/main.js')
+        import('/DataHeist/src/main.js')
           .then((module) => {
             console.log('[index.html] ✅ main.js module loaded successfully');
             console.log('[index.html] Module exports:', Object.keys(module));
