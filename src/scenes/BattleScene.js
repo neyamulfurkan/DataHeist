@@ -572,9 +572,9 @@ export default class BattleScene extends Phaser.Scene {
         this.applyProgressiveScaling(this.enemy, this.nodeData, this.actNumber);
       }
       
-      // CRITICAL FIX: Apply relic effects to runner BEFORE initializing combat system
+      // CRITICAL FIX: Apply relic effects to runner BEFORE combat system touches anything
       if (this.runner.relics && this.runner.relics.length > 0) {
-        console.log('[BattleScene] initializeCombat: Pre-applying relic effects to runner BEFORE combat init', {
+        console.log('[BattleScene] initializeCombat: ⚡ Pre-applying relic effects to runner', {
           relicCount: this.runner.relics.length,
           relics: this.runner.relics.map(r => r.name),
           beforeMaxCPU: this.runner.maxCPU,
@@ -585,41 +585,37 @@ export default class BattleScene extends Phaser.Scene {
         relicSystem.setRelics(this.runner.relics);
         const effects = relicSystem.getAggregatedEffects();
         
-        // Apply CPU bonus BEFORE combat system sees the runner
+        // Apply CPU bonus - MODIFIES RUNNER DIRECTLY
         if (effects.bonusStartingCPU > 0) {
           this.runner.maxCPU += effects.bonusStartingCPU;
           this.runner.currentCPU = this.runner.maxCPU;
-          console.log('[BattleScene] initializeCombat: ✅ Applied +' + effects.bonusStartingCPU + ' Max CPU BEFORE init');
+          console.log('[BattleScene] initializeCombat: ✅ CPU: ' + this.runner.currentCPU + '/' + this.runner.maxCPU);
         }
         
-        // Apply max trace increase BEFORE combat init
+        // Apply max trace increase - MODIFIES RUNNER DIRECTLY
         if (effects.maxTraceIncrease > 0) {
           this.runner.maxTrace += effects.maxTraceIncrease;
-          console.log('[BattleScene] initializeCombat: ✅ Applied +' + effects.maxTraceIncrease + ' Max Trace BEFORE init');
+          console.log('[BattleScene] initializeCombat: ✅ Max Trace: ' + this.runner.maxTrace);
         }
         
-        // Apply starting block BEFORE combat init
+        // Apply starting block - MODIFIES RUNNER DIRECTLY
         if (effects.startingBlock > 0) {
           this.runner.block = effects.startingBlock;
-          console.log('[BattleScene] initializeCombat: ✅ Applied ' + effects.startingBlock + ' starting Block BEFORE init');
+          console.log('[BattleScene] initializeCombat: ✅ Starting Block: ' + this.runner.block);
         }
         
-        console.log('[BattleScene] initializeCombat: Relic effects applied', {
-          afterMaxCPU: this.runner.maxCPU,
-          afterCurrentCPU: this.runner.currentCPU,
-          afterMaxTrace: this.runner.maxTrace,
-          afterBlock: this.runner.block
-        });
+        console.log('[BattleScene] initializeCombat: ⚡ Relic effects applied PERMANENTLY to runner');
       }
       
-      // NOW initialize combat with the modified runner
+      // NOW initialize combat with the MODIFIED runner
       this.gameState = combatSystem.initCombat(this.runner, this.enemy, this.events);
 
-      console.log('[BattleScene] initializeCombat: Combat system initialized', {
+      console.log('[BattleScene] initializeCombat: Combat system initialized with modified values', {
         turn: this.gameState.turn,
         phase: this.gameState.phase,
         playerCPU: this.gameState.player.currentCPU,
         playerMaxCPU: this.gameState.player.maxCPU,
+        playerMaxTrace: this.gameState.player.maxTrace,
         enemyIntent: this.gameState.enemy.getIntentDescription()
       });
 
@@ -638,16 +634,9 @@ export default class BattleScene extends Phaser.Scene {
         }
       }
 
-      // Don't update HUD here - it doesn't exist yet!
-      // HUD will be updated in initializeUI() after it's created
-      
       this.combatStartTurn = this.gameState.turn;
       
-      console.log('[BattleScene] initializeCombat: ✅ Combat initialized', {
-        playerCPU: this.gameState.player.currentCPU,
-        playerMaxCPU: this.gameState.player.maxCPU,
-        enemyIntent: this.enemy.getIntentDescription()
-      });
+      console.log('[BattleScene] initializeCombat: ✅ Combat initialized');
       
       // CRITICAL FIX: Update HUD ONLY if it exists (after initializeUI is called)
       if (this.hudElements) {

@@ -845,7 +845,7 @@ displayCardChoices() {
 
       console.log('[RewardScene] onConfirmClick: Card added:', this.selectedCard.name);
 
-      // Add relic to runner
+      // CRITICAL FIX: Add relic to runner AND ensure it's a proper Relic object
       if (this.selectedRelic) {
         if (!this.runner.relics) {
           this.runner.relics = [];
@@ -853,8 +853,15 @@ displayCardChoices() {
 
         const relicExists = this.runner.relics.some(r => r.id === this.selectedRelic.id);
         if (!relicExists) {
-          this.runner.relics.push(this.selectedRelic);
-          console.log('[RewardScene] onConfirmClick: ✅ Relic added:', this.selectedRelic.name);
+          // Ensure it's a proper Relic instance
+          const Relic = require('../entities/Relic.js').default;
+          const relicToAdd = this.selectedRelic instanceof Relic ? 
+            this.selectedRelic : 
+            new Relic(this.selectedRelic.id);
+          
+          this.runner.relics.push(relicToAdd);
+          console.log('[RewardScene] onConfirmClick: ✅ Relic added to runner:', relicToAdd.name);
+          console.log('[RewardScene] onConfirmClick: ✅ Runner now has', this.runner.relics.length, 'relics');
         } else {
           console.warn('[RewardScene] onConfirmClick: Relic already owned');
         }

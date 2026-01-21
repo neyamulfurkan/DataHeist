@@ -230,7 +230,7 @@ class SaveSystem {
         return null;
       }
 
-      const deserializedData = this._deserializeRunData(saveData);
+      const deserializedData = await this._deserializeRunData(saveData);
 
       console.log('[SaveSystem] loadCurrentRun: ✅ Run loaded successfully');
       console.log('[SaveSystem] loadCurrentRun: Run details:', {
@@ -238,7 +238,8 @@ class SaveSystem {
         runner: deserializedData.runner.name,
         actNumber: deserializedData.actNumber,
         currentNode: deserializedData.map.currentNodeId,
-        credits: deserializedData.credits
+        credits: deserializedData.credits,
+        relics: deserializedData.runner.relics.length
       });
 
       return deserializedData;
@@ -479,7 +480,7 @@ class SaveSystem {
     return serialized;
   }
 
-  _deserializeRunData(saveData) {
+  async _deserializeRunData(saveData) {
     console.log('[SaveSystem] _deserializeRunData: Deserializing run data...');
 
     if (!saveData.runner) {
@@ -494,17 +495,34 @@ class SaveSystem {
       const deck = saveData.deck ? Deck.fromJSON(saveData.deck) : null;
       console.log('[SaveSystem] _deserializeRunData: Deck deserialized:', deck ? deck.getAllCards().length + ' cards' : 'null');
 
-      // CRITICAL FIX: Deserialize relics and attach to runner
-      const Relic = require('../entities/Relic.js').default;
-      const deserializedRelics = (saveData.relics || []).map(relicData => {
-        if (relicData && typeof relicData === 'object') {
-          return Relic.fromJSON(relicData);
+      // CRITICAL FIX: Dynamically import Relic class
+      let deserializedRelics = [];
+      if (saveData.relics && saveData.relics.length > 0) {
+        try {
+          const RelicModule = await import('../entities/Relic.js');
+          const Relic = RelicModule.default;
+          
+          deserializedRelics = saveData.relics.map(relicData => {
+            if (relicData && typeof relicData === 'object') {
+              try {
+                return Relic.fromJSON(relicData);
+              } catch (err) {
+                console.error('[SaveSystem] _deserializeRunData: Failed to deserialize relic:', err);
+                return null;
+              }
+            }
+            return null;
+          }).filter(r => r !== null);
+          
+          console.log('[SaveSystem] _deserializeRunData: ✅ Relics deserialized:', deserializedRelics.length);
+        } catch (error) {
+          console.error('[SaveSystem] _deserializeRunData: Failed to import Relic class:', error);
+          deserializedRelics = [];
         }
-        return null;
-      }).filter(r => r !== null);
+      }
       
       runner.relics = deserializedRelics;
-      console.log('[SaveSystem] _deserializeRunData: ✅ Relics deserialized and attached to runner:', runner.relics.length);
+      console.log('[SaveSystem] _deserializeRunData: ✅ Relics attached to runner:', runner.relics.length);
 
       const deserialized = {
         runId: saveData.runId,
@@ -512,7 +530,7 @@ class SaveSystem {
         deck: deck,
         map: saveData.map,
         credits: saveData.credits,
-        relics: deserializedRelics, // Keep for backwards compatibility
+        relics: deserializedRelics,
         actNumber: saveData.actNumber,
         totalTurns: saveData.totalTurns,
         combatsWon: saveData.combatsWon
