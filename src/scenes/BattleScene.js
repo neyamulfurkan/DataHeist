@@ -2143,56 +2143,34 @@ createPersistentShield(x, y, isPlayer) {
         animateParticleExplosion(this, this.enemySprite.x, this.enemySprite.y, 0xff0055, 30).catch(err => console.error(err));
       }
 
-      // CRITICAL FIX: Check if this is a BOSS victory - skip RewardScene and go directly to VictoryScene
-      if (this.isBossCombat) {
-        console.log('[BattleScene] handleVictory: 🏆 BOSS DEFEATED - Calling VictoryScene directly');
-        
-        const combatStats = combatSystem.getCombatStats();
-        const runData = {
-          ...this.runState,
-          ...combatStats,
-          victory: true,
-          bossDefeated: this.enemy.id,
-          defeatedBosses: [this.enemy.id],
-          credits: this.runState.credits + (this.enemy.rewards.credits || 100),
-          actNumber: this.runState.actNumber,
-          totalTurns: combatStats.totalTurns,
-          combatsWon: (this.runState.combatsWon || 0) + 1,
-          maxTraceReached: Math.max(this.runState.maxTraceReached || 0, this.runner.currentTrace),
-          totalDamageDealt: combatStats.totalDamageDealt || 0
-        };
-        
-        this.time.delayedCall(GAME_CONFIG.ANIMATION.VICTORY_SCREEN_DELAY, () => {
-          console.log('[BattleScene] handleVictory: Transitioning to VictoryScene with data:', runData);
-          
-          this.scene.start('VictoryScene', {
-            runData: runData,
-            actNumber: this.runState.actNumber,
-            isFullRunComplete: this.runState.actNumber >= 3,
-            creditsEarned: this.enemy.rewards.credits || 100,
-            bossDefeated: this.enemy.id
-          });
-        });
-        
-        return; // CRITICAL: Exit early, don't go to RewardScene
-      }
-
-      // NON-BOSS: Generate rewards and go to RewardScene normally
-      console.log('[BattleScene] handleVictory: Generating rewards...');
+      // Generate rewards for ALL victories (boss and non-boss)
+      console.log('[BattleScene] handleVictory: Generating rewards...', {
+        isBoss: this.isBossCombat,
+        isElite: this.isEliteCombat
+      });
+      const actNumber = this.actNumber || this.runState?.actNumber || 1;
+      
       const cardChoices = rewardSystem.selectCardRewards(
         this.enemy.rewards.cardChoices || 3,
-        1,
+        actNumber,
         this.isBossCombat ? 'rare' : (this.isEliteCombat ? 'uncommon' : null)
       );
 
       console.log('[BattleScene] handleVictory: Card choices generated:', cardChoices.length);
+
+      // CRITICAL FIX: Actually generate relic if boss guarantees it
+      let earnedRelic = null;
+      if (this.enemy.rewards.guaranteedRelic) {
+        earnedRelic = rewardSystem.selectRelic(actNumber);
+        console.log('[BattleScene] handleVictory: Boss relic earned:', earnedRelic?.name);
+      }
 
       const formattedRewards = {
         credits: this.enemy.rewards.credits || 30,
         cardChoices: cardChoices,
         encounterType: this.isBossCombat ? 'boss' : (this.isEliteCombat ? 'elite' : 'combat'),
         bonusRewards: [],
-        relic: this.enemy.rewards.guaranteedRelic ? { name: 'Placeholder Relic' } : null
+        relic: earnedRelic  // FIXED: Use actual relic object
       };
 
       console.log('[BattleScene] handleVictory: Formatted rewards:', formattedRewards);

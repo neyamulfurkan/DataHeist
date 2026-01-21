@@ -224,7 +224,9 @@ export default class RewardScene extends Phaser.Scene {
 
    if (this.rewards.relic) {
         const relicName = this.rewards.relic.name || this.rewards.relic.id || 'Unknown Relic';
+        const relicDescription = this.rewards.relic.description || 'No description';
         const relicY = creditsY + 100;
+        
         const relicText = this.add.text(centerX, relicY, `RELIC EARNED: ${relicName}`, {
           fontFamily: GAME_CONFIG.UI.TEXT.FONT_FAMILY,
           fontSize: '24px',
@@ -232,12 +234,27 @@ export default class RewardScene extends Phaser.Scene {
           fontStyle: 'bold'
         });
         relicText.setOrigin(0.5);
+        
+        const relicDescText = this.add.text(centerX, relicY + 35, relicDescription, {
+          fontFamily: GAME_CONFIG.UI.TEXT.FONT_FAMILY,
+          fontSize: '18px',
+          color: GAME_CONFIG.UI.COLORS.TEXT_SECONDARY,
+          align: 'center',
+          wordWrap: { width: 600 }
+        });
+        relicDescText.setOrigin(0.5);
 
         console.log('[RewardScene] displayRewardsSummary: Relic displayed:', relicName);
         
-        if (this.runner && this.runner.addRelic) {
-          this.runner.addRelic(this.rewards.relic);
-          console.log('[RewardScene] displayRewardsSummary: Relic added to runner');
+        // CRITICAL FIX: Add relic to runner
+        if (this.runner) {
+          if (!this.runner.relics) {
+            this.runner.relics = [];
+          }
+          this.runner.relics.push(this.rewards.relic);
+          console.log('[RewardScene] displayRewardsSummary: Relic added to runner, total relics:', this.runner.relics.length);
+        } else {
+          console.error('[RewardScene] displayRewardsSummary: No runner to add relic to!');
         }
       }
 
