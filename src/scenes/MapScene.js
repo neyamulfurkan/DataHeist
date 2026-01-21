@@ -1479,47 +1479,53 @@ showRelicTooltip(relic, x, y) {
     }
 
     try {
-      // CRITICAL: Update ALL node states, not just available ones
+      // Step 1: Mark cleared nodes as visited (with checkmark)
       this.mapData.nodes.forEach(node => {
         if (node.cleared) {
-          // Already cleared - show as visited
+          node.available = false;
           if (this.mapUI) {
             this.mapUI.setNodeState(node.id, 'visited');
           }
-        } else {
-          // Not cleared - mark as unavailable for now
-          node.available = false;
         }
       });
 
-      if (!this.currentNode.connections || this.currentNode.connections.length === 0) {
+      // Step 2: Enable ALL connected nodes from current position
+      if (this.currentNode.connections && this.currentNode.connections.length > 0) {
+        console.log('[MapScene] updateAvailableNodes: Enabling connections from', this.currentNode.id);
+        
+        this.currentNode.connections.forEach(connectedId => {
+          const connectedNode = this.mapData.nodes.find(n => n.id === connectedId);
+          
+          if (connectedNode) {
+            if (!connectedNode.cleared) {
+              // CRITICAL: Mark as available and update UI to 'available'
+              connectedNode.available = true;
+              
+              if (this.mapUI) {
+                this.mapUI.setNodeState(connectedId, 'available');
+                console.log('[MapScene] updateAvailableNodes: ✅ Set node AVAILABLE:', connectedId);
+              }
+            } else {
+              console.log('[MapScene] updateAvailableNodes: Node already cleared, skipping:', connectedId);
+            }
+          } else {
+            console.warn('[MapScene] updateAvailableNodes: Connected node not found:', connectedId);
+          }
+        });
+      } else {
         console.warn('[MapScene] updateAvailableNodes: Current node has no connections:', this.currentNode.id);
-        return;
       }
 
-      // CRITICAL: Enable connected nodes and update UI immediately
-      this.currentNode.connections.forEach(connectedId => {
-        const connectedNode = this.mapData.nodes.find(n => n.id === connectedId);
-        if (connectedNode && !connectedNode.cleared) {
-          connectedNode.available = true;
-          
-          // CRITICAL: Update UI state immediately
-          if (this.mapUI) {
-            this.mapUI.setNodeState(connectedId, 'available');
-          }
-          
-          console.log('[MapScene] updateAvailableNodes: ✅ Node enabled:', connectedId);
-        }
-      });
-
-      // CRITICAL: Set locked state for all other nodes
+      // Step 3: Lock all other uncleared nodes
       this.mapData.nodes.forEach(node => {
-        if (!node.cleared && !node.available && this.mapUI) {
-          this.mapUI.setNodeState(node.id, 'locked');
+        if (!node.cleared && !node.available) {
+          if (this.mapUI) {
+            this.mapUI.setNodeState(node.id, 'locked');
+          }
         }
       });
 
-      console.log('[MapScene] updateAvailableNodes: ✅ All nodes updated');
+      console.log('[MapScene] updateAvailableNodes: ✅ Update complete');
 
     } catch (error) {
       console.error('[MapScene] updateAvailableNodes: ❌ Error:', error);
