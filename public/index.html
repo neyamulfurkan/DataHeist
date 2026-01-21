@@ -409,6 +409,7 @@
   <script>
     // Register Service Worker for PWA
     if ('serviceWorker' in navigator) {
+      return; // TEMPORARY: Disable service worker during development
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/DataHeist/sw.js')
           .then((registration) => {

@@ -2192,22 +2192,9 @@ createPersistentShield(x, y, isPlayer) {
     const turnsToWin = this.gameState.turn - this.combatStartTurn;
     console.log('[BattleScene] handleVictory: Combat duration:', turnsToWin, 'turns');
     
-    if (turnsToWin <= 5 && !this.isBossCombat) {
-      const quickBonus = Math.max(1, 6 - turnsToWin);
-      this.runner.modifyTrace(-quickBonus, 'quick_victory_bonus');
-      console.log('[BattleScene] handleVictory: Quick Victory! Trace reduced by', quickBonus);
-      this.showCombatLog(`Quick Victory! Trace -${quickBonus}`);
-    }
+    // REMOVED: Quick Victory bonus (trace should only change from card effects)
     
-    if (this.runner && this.runner.relics) {
-      const relicEffects = relicSystem.getAggregatedEffects();
-      
-      if (relicEffects.traceHealPerCombat > 0) {
-        this.runner.modifyTrace(-relicEffects.traceHealPerCombat, 'relic:trace_eraser');
-        console.log('[BattleScene] handleVictory: Trace Eraser healed', relicEffects.traceHealPerCombat, 'trace');
-        this.showCombatLog(`Trace Eraser: -${relicEffects.traceHealPerCombat} Trace`);
-      }
-    }
+    // REMOVED: Trace Eraser relic healing (trace should only change from card effects)
 
     if (this.isProcessingAction) {
       console.log('[BattleScene] handleVictory: Already processing action, delaying victory');
