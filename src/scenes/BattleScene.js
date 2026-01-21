@@ -182,8 +182,8 @@ export default class BattleScene extends Phaser.Scene {
     try {
       this.createBackground();
       this.createEnemyVisuals();
+      this.initializeCombat();  // MOVED BEFORE initializeUI
       this.initializeUI();
-      this.initializeCombat();
       this.setupEventListeners();
       this.createCombatLog();
       this.createForfeitButton();
