@@ -809,6 +809,16 @@ displayCardChoices() {
       return;
     }
     
+    // CRITICAL: Actually update the mapState with new act number
+    if (wasBossDefeated && nextAct > currentAct) {
+      console.log('[RewardScene] returnToMap: ✅ Incrementing act from', currentAct, 'to', nextAct);
+      this.mapState.actNumber = nextAct;
+      // Reset map state for new act
+      this.mapState.clearedNodes = [];
+      this.mapState.visitedNodes = [];
+      this.mapState.currentNodeId = null;
+    }
+    
     // Update run state with new act number
     const updatedRunState = {
       ...this.mapState,

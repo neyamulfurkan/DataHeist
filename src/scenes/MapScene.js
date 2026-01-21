@@ -193,6 +193,15 @@ loadExistingRun() {
     }
 
     try {
+      // CRITICAL FIX: Check if this is a new act (no cleared nodes)
+      const isNewAct = !this.runState.clearedNodes || this.runState.clearedNodes.length === 0;
+      
+      if (isNewAct) {
+        console.log('[MapScene] loadExistingRun: New act detected, generating fresh map for Act', this.runState.actNumber);
+        this.generateNewMap();
+        return;
+      }
+      
       console.log('[MapScene] loadExistingRun: Regenerating map from seed:', this.runState.seed);
       const mapData = generateMap(this.runState.actNumber, this.runState.seed + this.runState.actNumber);
       
@@ -510,14 +519,19 @@ loadExistingRun() {
       }).setOrigin(1, 0.5);
       deckSizeText.setName('deckSizeText');
       
-      const relicsText = this.add.text(40, 690, '', {
-        fontSize: '14px',
+      // CRITICAL: Create relic icon container instead of just text
+      this.relicIconsContainer = this.add.container(40, 680);
+      this.relicIconsContainer.setDepth(GAME_CONFIG.UI.Z_INDEX.HUD);
+      
+      const relicsLabel = this.add.text(0, 0, 'Relics:', {
+        fontSize: '16px',
         color: GAME_CONFIG.UI.COLORS.MAGENTA_PRIMARY,
-        fontFamily: GAME_CONFIG.UI.TEXT.FONT_FAMILY
+        fontFamily: GAME_CONFIG.UI.TEXT.FONT_FAMILY,
+        fontStyle: 'bold'
       });
-      relicsText.setName('relicsText');
+      this.relicIconsContainer.add(relicsLabel);
 
-      this.hudContainer.add([hudBg, runnerName, traceText, actText, creditsText, deckSizeText, relicsText]);
+      this.hudContainer.add([hudBg, runnerName, traceText, actText, creditsText, deckSizeText]);
 
       this.updateHUD();
 
@@ -635,13 +649,40 @@ loadExistingRun() {
         deckSizeText.setText(`Deck: ${deckSize} cards`);
       }
       
-      const relicsText = this.hudContainer.getByName('relicsText');
-      if (relicsText && this.runner && this.runner.relics) {
+      // CRITICAL: Update relic icons display
+      if (this.relicIconsContainer && this.runner && this.runner.relics) {
+        // Clear existing icons (keep label)
+        const children = this.relicIconsContainer.getAll();
+        for (let i = 1; i < children.length; i++) {
+          children[i].destroy();
+        }
+        
+        // Add relic icons
         if (this.runner.relics.length > 0) {
-          const relicNames = this.runner.relics.map(r => r.name).join(', ');
-          relicsText.setText(`Relics: ${relicNames}`);
-        } else {
-          relicsText.setText('');
+          this.runner.relics.forEach((relic, index) => {
+            const xPos = 80 + (index * 50);
+            
+            // Relic icon background
+            const iconBg = this.add.circle(xPos, 10, 20, GAME_CONFIG.UI.COLOR_HEX.MAGENTA_PRIMARY, 0.3);
+            iconBg.setStrokeStyle(2, GAME_CONFIG.UI.COLOR_HEX.MAGENTA_PRIMARY);
+            
+            // Relic emoji/symbol
+            const relicSymbol = this.add.text(xPos, 10, '⚡', {
+              fontSize: '24px'
+            });
+            relicSymbol.setOrigin(0.5);
+            
+            // Make interactive for tooltip
+            iconBg.setInteractive({ useHandCursor: true });
+            iconBg.on('pointerover', () => {
+              this.showRelicTooltip(relic, xPos, 10);
+            });
+            iconBg.on('pointerout', () => {
+              this.hideRelicTooltip();
+            });
+            
+            this.relicIconsContainer.add([iconBg, relicSymbol]);
+          });
         }
       }
 
@@ -651,7 +692,46 @@ loadExistingRun() {
       console.error('[MapScene] updateHUD: Error message:', error.message);
     }
   }
-
+showRelicTooltip(relic, x, y) {
+    if (this.relicTooltip) {
+      this.relicTooltip.destroy();
+    }
+    
+    const tooltipX = 40 + x;
+    const tooltipY = 620;
+    
+    this.relicTooltip = this.add.container(tooltipX, tooltipY);
+    this.relicTooltip.setDepth(GAME_CONFIG.UI.Z_INDEX.TOOLTIPS);
+    
+    const bg = this.add.rectangle(0, 0, 300, 80, GAME_CONFIG.UI.COLOR_HEX.BACKGROUND_DARK, 0.95);
+    bg.setStrokeStyle(2, GAME_CONFIG.UI.COLOR_HEX.MAGENTA_PRIMARY);
+    
+    const name = this.add.text(0, -25, relic.name, {
+      fontSize: '18px',
+      color: GAME_CONFIG.UI.COLORS.MAGENTA_PRIMARY,
+      fontFamily: GAME_CONFIG.UI.TEXT.FONT_FAMILY,
+      fontStyle: 'bold'
+    });
+    name.setOrigin(0.5);
+    
+    const desc = this.add.text(0, 10, relic.description, {
+      fontSize: '14px',
+      color: GAME_CONFIG.UI.COLORS.TEXT_PRIMARY,
+      fontFamily: GAME_CONFIG.UI.TEXT.FONT_FAMILY,
+      align: 'center',
+      wordWrap: { width: 280 }
+    });
+    desc.setOrigin(0.5);
+    
+    this.relicTooltip.add([bg, name, desc]);
+  }
+  
+  hideRelicTooltip() {
+    if (this.relicTooltip) {
+      this.relicTooltip.destroy();
+      this.relicTooltip = null;
+    }
+  }
   createPauseMenu() {
     console.log('[MapScene] createPauseMenu: Creating pause menu');
 
