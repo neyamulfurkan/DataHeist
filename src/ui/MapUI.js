@@ -522,7 +522,7 @@ try {
       return;
     }
 
-    // CRITICAL FIX: Stop existing glow animations
+    // Stop existing glow animations
     if (this.glowAnimations.has(nodeId)) {
       try {
         const existingTween = this.glowAnimations.get(nodeId);
@@ -539,7 +539,7 @@ try {
       }
     }
 
-    // CRITICAL FIX: Remove any existing checkmark before state change
+    // Remove any existing checkmark before state change
     const existingCheck = this.scene.children.list.find(
       child => child.name === `checkmark_${nodeId}`
     );
@@ -549,31 +549,25 @@ try {
 
     switch (state) {
       case 'available':
-        // FIXED: Set alpha on actual visual elements
         bg.setAlpha(1.0);
         icon.setAlpha(1.0);
         
-        // CRITICAL FIX: Use setFillStyle for Circle objects, not clearTint()
         const node = nodeSprite.getData('node');
         if (node) {
           const nodeColor = this.getNodeColor(node.type);
-          bg.setFillStyle(nodeColor, 1.0); // Restore original color
+          bg.setFillStyle(nodeColor, 1.0);
         }
         
-        // For text, clear tint is OK
         if (icon.clearTint) {
           icon.clearTint();
         }
         
-        // FIXED: Re-enable interactivity (simple is best)
-        if (!bg.input) {
-          bg.setInteractive({ useHandCursor: true });
-        } else {
-          bg.input.enabled = true;
-          bg.input.cursor = 'pointer';
+        // CRITICAL: Always recreate interactive area fresh for available nodes
+        if (bg.input) {
+          bg.removeInteractive();
         }
+        bg.setInteractive({ useHandCursor: true });
         
-        // FIXED: Show and animate glow
         if (glow) {
           glow.setVisible(true);
           glow.setAlpha(0.3);
@@ -591,18 +585,14 @@ try {
         break;
 
       case 'locked':
-        // FIXED: Apply locked visuals to actual elements
         bg.setAlpha(0.4);
         icon.setAlpha(0.4);
-        
-        // CRITICAL FIX: Use setFillStyle for grayscale, not setTint
         bg.setFillStyle(0x666666, 0.4);
         
         if (icon.setTint) {
           icon.setTint(0x666666);
         }
         
-        // FIXED: Disable interactivity
         if (bg.input) {
           bg.disableInteractive();
         }
@@ -613,11 +603,9 @@ try {
         break;
 
       case 'visited':
-        // FIXED: Apply visited visuals
         bg.setAlpha(0.6);
         icon.setAlpha(0.6);
         
-        // CRITICAL FIX: Restore original color with setFillStyle
         const visitedNode = nodeSprite.getData('node');
         if (visitedNode) {
           const visitedNodeColor = this.getNodeColor(visitedNode.type);
@@ -628,7 +616,6 @@ try {
           icon.clearTint();
         }
         
-        // FIXED: Disable interactivity
         if (bg.input) {
           bg.disableInteractive();
         }
@@ -637,7 +624,6 @@ try {
           glow.setVisible(false);
         }
         
-        // FIXED: Add checkmark at node's world position (only if doesn't exist)
         if (visitedNode) {
           const existingCheckmark = this.scene.children.list.find(
             child => child.name === `checkmark_${nodeId}`
@@ -657,11 +643,9 @@ try {
         break;
 
       case 'current':
-        // FIXED: Show current node highlighted
         bg.setAlpha(1.0);
         icon.setAlpha(1.0);
         
-        // CRITICAL FIX: Restore original color
         const currentNode = nodeSprite.getData('node');
         if (currentNode) {
           const currentNodeColor = this.getNodeColor(currentNode.type);
