@@ -227,7 +227,7 @@ export default class HUDElements {
       this.cpuLabel.setOrigin(0, 0.5);
 
       this.cpuIcons = [];
-      const maxCPU = GAME_CONFIG.GAMEPLAY.MAX_CPU;
+      const maxCPU = 6; // Support up to 6 CPU orbs for relic bonuses
       const iconStartX = 60;
       const iconSpacing = GAME_CONFIG.UI.HUD.CPU_ORB_SPACING + GAME_CONFIG.UI.HUD.CPU_ORB_SIZE;
 
@@ -236,9 +236,10 @@ export default class HUDElements {
           iconStartX + (i * iconSpacing),
           0,
           GAME_CONFIG.UI.HUD.CPU_ORB_SIZE / 2,
-          GAME_CONFIG.UI.COLOR_HEX.CYAN_PRIMARY
+          GAME_CONFIG.UI.COLOR_HEX.BACKGROUND_MID
         );
         icon.setStrokeStyle(3, GAME_CONFIG.UI.COLOR_HEX.WHITE);
+        icon.setAlpha(0.3); // Start dimmed
         this.cpuIcons.push(icon);
         this.cpuContainer.add(icon);
       }
@@ -617,34 +618,34 @@ export default class HUDElements {
         return;
       }
 
-      const expectedIconCount = Math.min(maxCPU, GAME_CONFIG.GAMEPLAY.MAX_CPU);
-      if (this.cpuIcons.length < expectedIconCount) {
-        console.warn('[HUDElements] updateCPU: Not enough CPU icons', {
-          iconCount: this.cpuIcons.length,
-          expectedCount: expectedIconCount
-        });
-      }
-
-      // CRITICAL FIX: Explicit icon state updates with detailed logging
-      let filledCount = 0;
-      let emptyCount = 0;
-      
+      // Show/hide icons based on maxCPU (support dynamic relic bonuses)
       this.cpuIcons.forEach((icon, index) => {
         if (!icon) {
           console.error('[HUDElements] updateCPU: Icon at index is null', { index });
           return;
         }
 
+        // Hide icons beyond maxCPU
+        if (index >= maxCPU) {
+          icon.setVisible(false);
+          return;
+        }
+
+        icon.setVisible(true);
+
+        // Fill active CPU orbs
         if (index < Math.floor(clampedCPU)) {
           icon.setFillStyle(GAME_CONFIG.UI.COLOR_HEX.CYAN_PRIMARY);
           icon.setAlpha(1.0);
-          filledCount++;
-        } else {
+        } else if (index < maxCPU) {
+          // Show empty orbs up to maxCPU
           icon.setFillStyle(GAME_CONFIG.UI.COLOR_HEX.BACKGROUND_MID);
           icon.setAlpha(0.3);
-          emptyCount++;
         }
       });
+
+      let filledCount = Math.floor(clampedCPU);
+      let emptyCount = maxCPU - filledCount;
 
       this.lastCPUValue = clampedCPU;
 

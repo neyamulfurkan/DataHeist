@@ -99,6 +99,12 @@ export default class MapScene extends Phaser.Scene {
         throw new Error('Invalid runner data type: ' + typeof data.runner);
       }
       
+      // CRITICAL FIX: Sync relics from runState to runner
+      if (data.runState && data.runState.relics && Array.isArray(data.runState.relics)) {
+        this.runner.relics = data.runState.relics;
+        console.log('[MapScene] init: ✅ Synced', data.runState.relics.length, 'relics to runner');
+      }
+      
       // CRITICAL FIX: Store the completed node ID from RewardScene
       this.completedNodeId = data.nodeId || data.completedNodeId || null;
       
@@ -650,16 +656,27 @@ loadExistingRun() {
       }
       
       // CRITICAL: Update relic icons display
-      if (this.relicIconsContainer && this.runner && this.runner.relics) {
-        // Clear existing icons (keep label)
+      if (this.relicIconsContainer && this.runner) {
+        // SAFETY: Clear ALL existing relic icons
         const children = this.relicIconsContainer.getAll();
         for (let i = 1; i < children.length; i++) {
-          children[i].destroy();
+          if (children[i] && children[i].destroy) {
+            children[i].destroy();
+          }
+        }
+        
+        // CRITICAL FIX: Use runState.relics if runner.relics is empty
+        const relicsToDisplay = (this.runner.relics && this.runner.relics.length > 0) 
+          ? this.runner.relics 
+          : (this.runState && this.runState.relics ? this.runState.relics : []);
+        
+        if (!relicsToDisplay || relicsToDisplay.length === 0) {
+          console.log('[MapScene] updateHUD: No relics to display');
+          return;
         }
         
         // Add relic icons
-        if (this.runner.relics.length > 0) {
-          this.runner.relics.forEach((relic, index) => {
+        relicsToDisplay.forEach((relic, index) => {
             const xPos = 80 + (index * 50);
             
             // Relic icon background
@@ -1534,9 +1551,8 @@ showRelicTooltip(relic, x, y) {
   }
 
   checkActComplete() {
-    // This function is now obsolete - VictoryScene handles act completion
-    // Kept for backwards compatibility with existing code that calls it
-    console.log('[MapScene] checkActComplete: Function called but VictoryScene now handles act progression');
+    // Completely disabled - act completion handled by VictoryScene
+    console.log('[MapScene] checkActComplete: Disabled - VictoryScene handles act transitions');
     return;
   }
 
