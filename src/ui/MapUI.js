@@ -365,9 +365,7 @@ try {
       const container = this.scene.add.container(0, 0);
       container.setDepth(GAME_CONFIG.UI.Z_INDEX.MAP_NODES);
       
-      // CRITICAL FIX: Hitbox must match world position of the circle
-      // The circle is at (node.x, node.y) in world coords, so hitbox center should be at those coords too
-      // But since the circle itself is already positioned at node.x/node.y, use local coords (0,0)
+      // Set up interactivity - simple hitbox works best
       bg.setInteractive({ useHandCursor: true });
 
       bg.on('pointerover', () => {
@@ -567,13 +565,13 @@ try {
           icon.clearTint();
         }
         
-        // FIXED: Enable interactivity on the bg circle at world position
-        const size = nodeSprite.getData('size') || GAME_CONFIG.UI.NODE.SIZE;
-        bg.setInteractive(
-          new Phaser.Geom.Circle(0, 0, size / 2),
-          Phaser.Geom.Circle.Contains
-        );
-        bg.input.cursor = 'pointer';
+        // FIXED: Re-enable interactivity (simple is best)
+        if (!bg.input) {
+          bg.setInteractive({ useHandCursor: true });
+        } else {
+          bg.input.enabled = true;
+          bg.input.cursor = 'pointer';
+        }
         
         // FIXED: Show and animate glow
         if (glow) {

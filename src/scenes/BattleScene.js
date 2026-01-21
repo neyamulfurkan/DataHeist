@@ -202,6 +202,15 @@ export default class BattleScene extends Phaser.Scene {
         handSize: this.runner.deck.hand.length
       });
 
+      // CRITICAL FIX: Force HUD refresh after relics applied
+      this.time.delayedCall(50, () => {
+        this.hudElements.updateCPU(this.runner.currentCPU, this.runner.maxCPU);
+        console.log('[BattleScene] create: HUD CPU updated after relics', {
+          currentCPU: this.runner.currentCPU,
+          maxCPU: this.runner.maxCPU
+        });
+      });
+
       this.time.delayedCall(100, () => {
         this.executePlayerTurn();
       });
