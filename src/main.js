@@ -128,6 +128,7 @@ try {
   console.log('[main.js] Creating Phaser game instance...');
   
   game = new Phaser.Game(gameConfig);
+
   
     // Register all other scenes dynamically (no auto-boot)
   game.scene.add('MenuScene', MenuScene, false);

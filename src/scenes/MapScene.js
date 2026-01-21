@@ -676,7 +676,8 @@ loadExistingRun() {
         }
         
         // Add relic icons
-        relicsToDisplay.forEach((relic, index) => {
+        if (this.runner.relics.length > 0) {
+          this.runner.relics.forEach((relic, index) => {
             const xPos = 80 + (index * 50);
             
             // Relic icon background
