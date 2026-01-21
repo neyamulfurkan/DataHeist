@@ -878,4 +878,4 @@ export const {
   DIFFICULTY,
   DEBUG_MODE,
   VERSION
-} = GAME_CONFIG;
+} = GAME_CONFIG; 
