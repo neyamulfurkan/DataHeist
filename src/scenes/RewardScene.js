@@ -26,6 +26,7 @@ import rewardSystem from '../systems/RewardSystem.js';
 import CardUI from '../ui/CardUI.js';
 import Runner from '../entities/Runner.js';
 import audioManager from '../utils/AudioManager.js';
+import Relic from '../entities/Relic.js';
 
 export default class RewardScene extends Phaser.Scene {
   constructor() {
@@ -853,8 +854,7 @@ displayCardChoices() {
 
         const relicExists = this.runner.relics.some(r => r.id === this.selectedRelic.id);
         if (!relicExists) {
-          // Ensure it's a proper Relic instance
-          const Relic = require('../entities/Relic.js').default;
+          // Ensure it's a proper Relic instance (Relic imported at top)
           const relicToAdd = this.selectedRelic instanceof Relic ? 
             this.selectedRelic : 
             new Relic(this.selectedRelic.id);
