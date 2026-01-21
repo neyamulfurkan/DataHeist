@@ -340,58 +340,63 @@ loadExistingRun() {
 
       this.mapUI.renderMap(this.mapData, this.currentNode.id);
       
-      // CRITICAL FIX: Handle completed node from RewardScene
+      // CRITICAL FIX: Handle completed node from RewardScene - SKIP BOSS NODES
       if (this.completedNodeId) {
         console.log('[MapScene] create: Processing completed node:', this.completedNodeId);
         const completedNode = this.mapData.nodes.find(n => n.id === this.completedNodeId);
         
         if (completedNode) {
-          completedNode.cleared = true;
-          completedNode.visited = true;
-          completedNode.available = false;
+          // CRITICAL: Only mark as cleared if NOT a boss (bosses advance acts)
+          const isBoss = completedNode.type === 'boss';
           
-          if (!Array.isArray(this.runState.clearedNodes)) {
-            this.runState.clearedNodes = [];
-          }
-          if (!this.runState.clearedNodes.includes(completedNode.id)) {
-            this.runState.clearedNodes.push(completedNode.id);
-          }
-          
-          // Set as current position
-          this.currentNode = completedNode;
-          this.runState.currentNodeId = completedNode.id;
-          
-          // CRITICAL: Enable connected nodes BEFORE updating UI
-          if (completedNode.connections && completedNode.connections.length > 0) {
-            completedNode.connections.forEach(connId => {
-              const connectedNode = this.mapData.nodes.find(n => n.id === connId);
-              if (connectedNode && !connectedNode.cleared) {
-                connectedNode.available = true;
-                console.log('[MapScene] create: Enabled connected node:', connId);
-              }
+          if (!isBoss) {
+            completedNode.cleared = true;
+            completedNode.visited = true;
+            completedNode.available = false;
+            
+            if (!Array.isArray(this.runState.clearedNodes)) {
+              this.runState.clearedNodes = [];
+            }
+            if (!this.runState.clearedNodes.includes(completedNode.id)) {
+              this.runState.clearedNodes.push(completedNode.id);
+            }
+            
+            // Set as current position
+            this.currentNode = completedNode;
+            this.runState.currentNodeId = completedNode.id;
+            
+            // CRITICAL: Enable connected nodes BEFORE updating UI
+            if (completedNode.connections && completedNode.connections.length > 0) {
+              completedNode.connections.forEach(connId => {
+                const connectedNode = this.mapData.nodes.find(n => n.id === connId);
+                if (connectedNode && !connectedNode.cleared) {
+                  connectedNode.available = true;
+                  console.log('[MapScene] create: Enabled connected node:', connId);
+                }
+              });
+            }
+            
+            // CRITICAL FIX: Update MapUI immediately with correct states
+            this.mapUI.setNodeState(completedNode.id, 'visited');
+            
+            if (completedNode.connections && completedNode.connections.length > 0) {
+              completedNode.connections.forEach(connId => {
+                const connectedNode = this.mapData.nodes.find(n => n.id === connId);
+                if (connectedNode && !connectedNode.cleared) {
+                  this.mapUI.setNodeState(connId, 'available');
+                  console.log('[MapScene] create: ✅ UI updated - node available:', connId);
+                }
+              });
+            }
+            
+            console.log('[MapScene] create: ✅ Node processing complete', {
+              clearedNode: completedNode.id,
+              enabledConnections: completedNode.connections.length
             });
+          } else {
+            console.log('[MapScene] create: ⚠️ Skipped boss node state update (act already advanced)');
           }
-          
-          // CRITICAL FIX: Update MapUI immediately with correct states
-          this.mapUI.setNodeState(completedNode.id, 'visited');
-          
-          if (completedNode.connections && completedNode.connections.length > 0) {
-            completedNode.connections.forEach(connId => {
-              const connectedNode = this.mapData.nodes.find(n => n.id === connId);
-              if (connectedNode && !connectedNode.cleared) {
-                this.mapUI.setNodeState(connId, 'available');
-                console.log('[MapScene] create: ✅ UI updated - node available:', connId);
-              }
-            });
-          }
-          
-          console.log('[MapScene] create: ✅ Node processing complete', {
-            clearedNode: completedNode.id,
-            enabledConnections: completedNode.connections.length
-          });
         }
-        
-        // DON'T clear flag yet - need it for boss check below
       }
       
       // CRITICAL FIX: Only set starting node logic if NOT coming from completed node

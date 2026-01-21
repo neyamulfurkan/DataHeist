@@ -494,6 +494,30 @@ export default class BattleScene extends Phaser.Scene {
     console.log('[BattleScene] initializeUI: Initializing UI components');
 
     try {
+      // CRITICAL FIX: Apply relics BEFORE creating UI
+      if (this.runner.relics && this.runner.relics.length > 0) {
+        console.log('[BattleScene] initializeUI: ⚡ Pre-applying relic effects BEFORE UI creation');
+        
+        relicSystem.setRelics(this.runner.relics);
+        const effects = relicSystem.getAggregatedEffects();
+        
+        if (effects.bonusStartingCPU > 0) {
+          this.runner.maxCPU += effects.bonusStartingCPU;
+          this.runner.currentCPU = this.runner.maxCPU;
+          console.log('[BattleScene] initializeUI: ✅ CPU boosted to:', this.runner.maxCPU);
+        }
+        
+        if (effects.maxTraceIncrease > 0) {
+          this.runner.maxTrace += effects.maxTraceIncrease;
+          console.log('[BattleScene] initializeUI: ✅ Max Trace boosted to:', this.runner.maxTrace);
+        }
+        
+        if (effects.startingBlock > 0) {
+          this.runner.block = effects.startingBlock;
+          console.log('[BattleScene] initializeUI: ✅ Starting Block:', this.runner.block);
+        }
+      }
+
       this.cardUI = new CardUI(this);
       console.log('[BattleScene] initializeUI: CardUI created');
 
@@ -572,42 +596,7 @@ export default class BattleScene extends Phaser.Scene {
         this.applyProgressiveScaling(this.enemy, this.nodeData, this.actNumber);
       }
       
-      // CRITICAL FIX: Apply relic effects to runner BEFORE combat system touches anything
-      if (this.runner.relics && this.runner.relics.length > 0) {
-        console.log('[BattleScene] initializeCombat: ⚡ Pre-applying relic effects to runner', {
-          relicCount: this.runner.relics.length,
-          relics: this.runner.relics.map(r => r.name),
-          beforeMaxCPU: this.runner.maxCPU,
-          beforeCurrentCPU: this.runner.currentCPU,
-          beforeMaxTrace: this.runner.maxTrace
-        });
-        
-        relicSystem.setRelics(this.runner.relics);
-        const effects = relicSystem.getAggregatedEffects();
-        
-        // Apply CPU bonus - MODIFIES RUNNER DIRECTLY
-        if (effects.bonusStartingCPU > 0) {
-          this.runner.maxCPU += effects.bonusStartingCPU;
-          this.runner.currentCPU = this.runner.maxCPU;
-          console.log('[BattleScene] initializeCombat: ✅ CPU: ' + this.runner.currentCPU + '/' + this.runner.maxCPU);
-        }
-        
-        // Apply max trace increase - MODIFIES RUNNER DIRECTLY
-        if (effects.maxTraceIncrease > 0) {
-          this.runner.maxTrace += effects.maxTraceIncrease;
-          console.log('[BattleScene] initializeCombat: ✅ Max Trace: ' + this.runner.maxTrace);
-        }
-        
-        // Apply starting block - MODIFIES RUNNER DIRECTLY
-        if (effects.startingBlock > 0) {
-          this.runner.block = effects.startingBlock;
-          console.log('[BattleScene] initializeCombat: ✅ Starting Block: ' + this.runner.block);
-        }
-        
-        console.log('[BattleScene] initializeCombat: ⚡ Relic effects applied PERMANENTLY to runner');
-      }
-      
-      // NOW initialize combat with the MODIFIED runner
+      // Relics already applied in initializeUI - just initialize combat
       this.gameState = combatSystem.initCombat(this.runner, this.enemy, this.events);
 
       console.log('[BattleScene] initializeCombat: Combat system initialized with modified values', {
@@ -619,20 +608,7 @@ export default class BattleScene extends Phaser.Scene {
         enemyIntent: this.gameState.enemy.getIntentDescription()
       });
 
-      // Show relic messages in combat log
-      if (this.runner.relics && this.runner.relics.length > 0) {
-        const effects = relicSystem.getAggregatedEffects();
-        
-        if (effects.bonusStartingCPU > 0) {
-          this.showCombatLog(`Relic: +${effects.bonusStartingCPU} Max CPU!`);
-        }
-        if (effects.maxTraceIncrease > 0) {
-          this.showCombatLog(`Relic: +${effects.maxTraceIncrease} Max Trace!`);
-        }
-        if (effects.startingBlock > 0) {
-          this.showCombatLog(`Relic: Start with ${effects.startingBlock} Block!`);
-        }
-      }
+      // Combat log messages shown in initializeUI - skip here to avoid duplicates
 
       this.combatStartTurn = this.gameState.turn;
       
