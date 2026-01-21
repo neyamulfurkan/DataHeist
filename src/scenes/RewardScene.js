@@ -222,24 +222,24 @@ export default class RewardScene extends Phaser.Scene {
       });
     }
 
-    if (this.rewards.relic && this.rewards.relic.name) {
-      const relicY = creditsY + 100;
-      const relicText = this.add.text(centerX, relicY, `RELIC EARNED: ${this.rewards.relic.name}`, {
-        fontFamily: GAME_CONFIG.UI.TEXT.FONT_FAMILY,
-        fontSize: '24px',
-        color: GAME_CONFIG.UI.COLORS.MAGENTA_PRIMARY,
-        fontStyle: 'bold'
-      });
-      relicText.setOrigin(0.5);
+   if (this.rewards.relic) {
+        const relicName = this.rewards.relic.name || this.rewards.relic.id || 'Unknown Relic';
+        const relicY = creditsY + 100;
+        const relicText = this.add.text(centerX, relicY, `RELIC EARNED: ${relicName}`, {
+          fontFamily: GAME_CONFIG.UI.TEXT.FONT_FAMILY,
+          fontSize: '24px',
+          color: GAME_CONFIG.UI.COLORS.MAGENTA_PRIMARY,
+          fontStyle: 'bold'
+        });
+        relicText.setOrigin(0.5);
 
-      console.log('[RewardScene] displayRewardsSummary: Relic displayed:', this.rewards.relic.name);
-      
-      // CRITICAL FIX: Add relic to runner
-      if (this.runner && this.runner.addRelic) {
-        this.runner.addRelic(this.rewards.relic);
-        console.log('[RewardScene] displayRewardsSummary: Relic added to runner');
+        console.log('[RewardScene] displayRewardsSummary: Relic displayed:', relicName);
+        
+        if (this.runner && this.runner.addRelic) {
+          this.runner.addRelic(this.rewards.relic);
+          console.log('[RewardScene] displayRewardsSummary: Relic added to runner');
+        }
       }
-    }
 
     console.log('[RewardScene] displayRewardsSummary: Summary displayed successfully');
   }

@@ -24,6 +24,7 @@ import Runner from '../entities/Runner.js';
 import ICE from '../entities/ICE.js';
 import { applyEffectToArray, tickEffects, getEffectMultipliers, createEffect } from '../entities/Effect.js';
 import { clamp } from '../utils/MathUtils.js';
+import relicSystem from '../systems/RelicSystem.js';
 
 console.log('[CombatSystem] Loading CombatSystem singleton...');
 
@@ -184,12 +185,16 @@ class CombatSystem {
       return;
     }
     
-    const relicEffects = this.gameState.player.getRelicEffects();
+    relicSystem.setRelics(this.gameState.player.relics || []);
+    
+    const triggeredRelics = relicSystem.trigger('onCombatStart', { gameState: this.gameState });
+    
+    const relicEffects = relicSystem.getAggregatedEffects();
     
     if (relicEffects.bonusStartingCPU > 0) {
       this.gameState.player.maxCPU += relicEffects.bonusStartingCPU;
       this.gameState.player.currentCPU = this.gameState.player.maxCPU;
-      console.log('[CombatSystem] applyRelicEffects: CPU Optimizer - max CPU increased to', this.gameState.player.maxCPU);
+      console.log('[CombatSystem] applyRelicEffects: CPU bonus - max CPU increased to', this.gameState.player.maxCPU);
     }
     
     if (relicEffects.maxTraceIncrease > 0) {
@@ -197,8 +202,21 @@ class CombatSystem {
       console.log('[CombatSystem] applyRelicEffects: Trace Buffer - max trace increased to', this.gameState.player.maxTrace);
     }
     
-    console.log('[CombatSystem] applyRelicEffects: Relic effects applied:', relicEffects);
+    if (relicEffects.startingBlock > 0) {
+      this.gainBlock(relicEffects.startingBlock, this.gameState.player, 'relic:ghost_protocol');
+      console.log('[CombatSystem] applyRelicEffects: Ghost Protocol - gained', relicEffects.startingBlock, 'starting block');
+    }
+    
+    if (relicEffects.upgradeRandomCard > 0) {
+      const deck = this.gameState.player.deck.getAllCards();
+const upgradeableCards = deck.filter(c => c.upgradeLevel < GAME_CONFIG.CARDS.MAX_UPGRADE_LEVEL);  if (upgradeableCards.length > 0) {
+    const randomIndex = Math.floor(Math.random() * upgradeableCards.length);
+    const cardToUpgrade = upgradeableCards[randomIndex];
+    cardToUpgrade.upgrade();
+    console.log('[CombatSystem] applyRelicEffects: AI Companion - upgraded', cardToUpgrade.name);
   }
+}console.log('[CombatSystem] applyRelicEffects: Relic effects applied:', relicEffects);
+}
 
   startTurn() {
     if (!this.gameState) {
@@ -290,20 +308,18 @@ class CombatSystem {
 
     player.incrementTurn();
     
-    // ARCHITECT PASSIVE: Strategic Insight - draw extra card at turn start
-    if (player.passiveAbility && player.passiveAbility.id === 'strategic_insight') {
-      console.log('[CombatSystem] startTurn: Triggering Architect passive ability');
-      try {
-        player.passiveAbility.effect(this.gameState);
-      } catch (error) {
-        console.error('[CombatSystem] startTurn: Architect passive failed', error);
-      }
-    }
+    relicSystem.trigger('onTurnStart', { gameState: this.gameState });
     
-    const relicEffects = player.getRelicEffects();
+    const relicEffects = relicSystem.getAggregatedEffects();
+    
     if (relicEffects.traceReductionPerTurn > 0) {
       player.modifyTrace(-relicEffects.traceReductionPerTurn, 'relic:stealth_module');
       console.log('[CombatSystem] startTurn: Stealth Module reduced trace by', relicEffects.traceReductionPerTurn);
+    }
+    
+    if (relicEffects.bonusCardsPerTurn > 0) {
+      const bonusCards = player.deck.draw(relicEffects.bonusCardsPerTurn);
+      console.log('[CombatSystem] startTurn: Neural Link drew', bonusCards.length, 'bonus cards');
     }
 
     console.log('[CombatSystem] startTurn: Turn started', {
@@ -329,7 +345,7 @@ class CombatSystem {
     return true;
   }
 
-  async playCard(card) {
+ async playCard(card) {
     if (!this.gameState) {
       console.error('[CombatSystem] playCard: No active combat');
       return false;
@@ -340,7 +356,6 @@ class CombatSystem {
       return false;
     }
     
-    // FIXED: Prevent infinite draw loops by tracking draws per turn
     if (!this.gameState.drawsThisTurn) {
       this.gameState.drawsThisTurn = 0;
     }
@@ -393,8 +408,20 @@ class CombatSystem {
       return false;
     }
 
-    // DYNAMIC COST: Use actual cost (may be reduced)
-    const actualCost = card.getActualCost ? card.getActualCost(this.gameState) : card.cost;
+    relicSystem.trigger('onCardPlay', { card, gameState: this.gameState });
+    
+    let actualCost = card.getActualCost ? card.getActualCost(this.gameState) : card.cost;
+    
+    const relicEffects = relicSystem.getAggregatedEffects();
+    if (relicEffects.firstCardFree && this.gameState.cardsPlayedThisTurn.length === 0) {
+      actualCost = 0;
+      console.log('[CombatSystem] playCard: System Backdoor - first card is free');
+    }
+    
+    if (relicEffects.exploitCostReduction > 0 && card.type === 'exploit') {
+      actualCost = Math.max(0, actualCost - relicEffects.exploitCostReduction);
+      console.log('[CombatSystem] playCard: Exploit Framework - cost reduced to', actualCost);
+    }
     
     const cpuSpent = player.spendCPU(actualCost, `playCard:${card.name}`);
     
@@ -1061,7 +1088,7 @@ _executeTraceReductionEffect(effect, card, gameState) {
     }
   }
 
-  dealDamage(baseDamage, target, source, sourceDescription = 'unknown') {
+ dealDamage(baseDamage, target, source, sourceDescription = 'unknown') {
     if (typeof baseDamage !== 'number' || baseDamage < 0) {
       console.error('[CombatSystem] dealDamage: Invalid baseDamage', {
         baseDamage,
@@ -1093,13 +1120,14 @@ _executeTraceReductionEffect(effect, card, gameState) {
     let finalDamage = baseDamage;
     
     if (source === this.gameState?.player) {
-      const relicEffects = source.getRelicEffects();
+      relicSystem.trigger('onDamageDealt', { damage: finalDamage, target, source, gameState: this.gameState });
+      
+      const relicEffects = relicSystem.getAggregatedEffects();
       if (relicEffects.damageBonus > 0) {
         finalDamage += relicEffects.damageBonus;
         console.log('[CombatSystem] dealDamage: Exploit Amplifier bonus +', relicEffects.damageBonus);
       }
       
-      // DEMON PASSIVE: Adrenaline Spike - damage bonus at high trace
       if (source.passiveAbility && source.passiveAbility.id === 'adrenaline_spike') {
         const bonusDamage = source.passiveAbility.effect(finalDamage, this.gameState);
         if (bonusDamage !== finalDamage) {
@@ -1305,7 +1333,9 @@ _executeTraceReductionEffect(effect, card, gameState) {
     let finalBlock = baseBlock;
     
     if (target === this.gameState?.player) {
-      const relicEffects = target.getRelicEffects();
+      relicSystem.trigger('onBlockGained', { block: finalBlock, target, gameState: this.gameState });
+      
+      const relicEffects = relicSystem.getAggregatedEffects();
       if (relicEffects.blockBonus > 0) {
         finalBlock += relicEffects.blockBonus;
         console.log('[CombatSystem] gainBlock: Defense Matrix bonus +', relicEffects.blockBonus);
@@ -1563,7 +1593,22 @@ applyStatus(type, stacks, duration, target, sourceDescription = 'unknown') {
       });
     }
 
-    player.deck.resetTurn();
+   player.deck.resetTurn();
+    
+    relicSystem.trigger('onTurnEnd', { gameState: this.gameState });
+    
+    const relicEffects = relicSystem.getAggregatedEffects();
+    if (relicEffects.retainRandomCards > 0 && player.deck.hand.length > 0) {
+      const hand = player.deck.hand;
+      for (let i = 0; i < Math.min(relicEffects.retainRandomCards, hand.length); i++) {
+        const randomIndex = Math.floor(Math.random() * hand.length);
+        const cardToRetain = hand[randomIndex];
+        if (cardToRetain && !cardToRetain.keywords.includes('retain')) {
+          cardToRetain.keywords.push('retain');
+          console.log('[CombatSystem] endTurn: Quantum Cache - retained', cardToRetain.name);
+        }
+      }
+    }
 
     this.eventEmitter.emit('turnEnd', {
       turn: this.gameState.turn,

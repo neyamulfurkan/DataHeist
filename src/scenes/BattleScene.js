@@ -28,6 +28,7 @@ import CardUI from '../ui/CardUI.js';
 import Runner from '../entities/Runner.js';
 import ICE from '../entities/ICE.js';
 import audioManager from '../utils/AudioManager.js';
+import relicSystem from '../systems/RelicSystem.js';
 import { 
   animateDamageNumber, 
   animateShake, 
@@ -2079,7 +2080,7 @@ createPersistentShield(x, y, isPlayer) {
   /**
    * Handle victory
    */
-  handleVictory() {
+ handleVictory() {
     console.log('[BattleScene] handleVictory: Victory achieved!', {
       turn: this.gameState?.turn,
       playerTrace: this.runner.currentTrace,
@@ -2095,6 +2096,16 @@ createPersistentShield(x, y, isPlayer) {
       this.runner.modifyTrace(-quickBonus, 'quick_victory_bonus');
       console.log('[BattleScene] handleVictory: Quick Victory! Trace reduced by', quickBonus);
       this.showCombatLog(`Quick Victory! Trace -${quickBonus}`);
+    }
+    
+    if (this.runner && this.runner.relics) {
+      const relicEffects = relicSystem.getAggregatedEffects();
+      
+      if (relicEffects.traceHealPerCombat > 0) {
+        this.runner.modifyTrace(-relicEffects.traceHealPerCombat, 'relic:trace_eraser');
+        console.log('[BattleScene] handleVictory: Trace Eraser healed', relicEffects.traceHealPerCombat, 'trace');
+        this.showCombatLog(`Trace Eraser: -${relicEffects.traceHealPerCombat} Trace`);
+      }
     }
 
     if (this.isProcessingAction) {
