@@ -520,7 +520,7 @@ class ProgressionSystem {
     return true;
   }
 
-  awardAchievement(achievementId) {
+  async awardAchievement(achievementId) {
     console.log('[ProgressionSystem] awardAchievement: Awarding achievement:', achievementId);
 
     if (!achievementId || typeof achievementId !== 'string') {
@@ -557,15 +557,15 @@ class ProgressionSystem {
           console.log('[ProgressionSystem] awardAchievement: ✅ Auto-unlocked runner:', runner.name);
         }
       });
-      // CRITICAL FIX: Save immediately after unlocking content
-      this.save();
     }
 
-    this.save();
+    // CRITICAL FIX: Save ONCE at the end with await
+    await this.save();
+    console.log('[ProgressionSystem] awardAchievement: Achievement and unlocks saved to IndexedDB');
     return true;
   }
 
-  checkAchievements(runData) {
+  async checkAchievements(runData) {
     console.log('[ProgressionSystem] checkAchievements: Checking achievements for run...');
 
     if (!runData || typeof runData !== 'object') {
@@ -613,12 +613,12 @@ class ProgressionSystem {
 
     console.log('[ProgressionSystem] checkAchievements: New achievements earned:', newAchievements.length);
 
-    newAchievements.forEach(achievementId => {
-      this.awardAchievement(achievementId);
-    });
+    for (const achievementId of newAchievements) {
+      await this.awardAchievement(achievementId);
+    }
   }
 
-  onRunComplete(runData, victory) {
+  async onRunComplete(runData, victory) {
     console.log('[ProgressionSystem] onRunComplete: Processing run completion...');
     console.log('[ProgressionSystem] onRunComplete: Victory:', victory);
 
@@ -749,10 +749,10 @@ Object.entries(runData.cardPlayCounts).forEach(([cardId, count]) => {
       favoriteRunner: this.metaData.statistics.favoriteRunner
     });
 
-    this.checkAchievements(runData);
+    await this.checkAchievements(runData);
 
-    this.save();
-    console.log('[ProgressionSystem] onRunComplete: ✅ Run completion processed');
+    await this.save();
+    console.log('[ProgressionSystem] onRunComplete: ✅ Run completion processed and saved');
   }
 
   isRunnerUnlocked(runnerId) {

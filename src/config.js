@@ -108,10 +108,10 @@ export const GAME_CONFIG = {
   // ============================================================================
   COMBAT: {
     // Damage Multipliers
-    WEAK_MULTIPLIER: 0.75,
-    VULNERABLE_MULTIPLIER: 1.5,
-    STRENGTH_BONUS_PER_STACK: 2,
-    DEXTERITY_BLOCK_BONUS_PER_STACK: 2,
+    WEAK_MULTIPLIER: 0.70,
+    VULNERABLE_MULTIPLIER: 1.4,
+    STRENGTH_BONUS_PER_STACK: 1,
+    DEXTERITY_BLOCK_BONUS_PER_STACK: 1,
     
     // Minimum Values
     MIN_DAMAGE: 0,
@@ -142,7 +142,8 @@ export const GAME_CONFIG = {
     TRACE_PER_DAMAGE_TAKEN: 1.0, // 1:1 ratio
     TRACE_REDUCTION_FLOOR: 0, // Can't reduce below 0
     TRACE_INCREASE_FLOOR: 0,
-    TRACE_INCREASE_CEILING: 100
+    TRACE_INCREASE_CEILING: 100,
+    UNSPENT_CPU_TRACE_PENALTY: 0.5 // Gain trace for wasting CPU
   },
 
   // ============================================================================

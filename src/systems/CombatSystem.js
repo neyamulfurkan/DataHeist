@@ -220,9 +220,19 @@ class CombatSystem {
     const player = this.gameState.player;
 
     const previousCPU = player.currentCPU;
+    const unspentCPU = player.currentCPU;
     player.resetCPU();
+    
+    // BALANCE: Penalty for ending turn with unspent CPU
+    if (unspentCPU >= 2) {
+      const tracePenalty = Math.floor(unspentCPU / 2);
+      player.modifyTrace(tracePenalty, 'unspent_cpu_penalty');
+      console.log('[CombatSystem] startTurn: Unspent CPU penalty +', tracePenalty, 'Trace');
+    }
+    
     console.log('[CombatSystem] startTurn: CPU reset', {
       previousCPU,
+      unspentCPU,
       newCPU: player.currentCPU,
       maxCPU: player.maxCPU
     });

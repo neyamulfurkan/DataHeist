@@ -6,25 +6,27 @@ export const RELIC_LIBRARY = {
   relic_stealth_module: {
     id: 'relic_stealth_module',
     name: 'Stealth Module',
-    description: 'Reduce Trace gain by 1 each turn.',
+    description: 'Reduce Trace by 2 at the end of combat (only if you took damage this turn).',
     tier: 'base',
     spriteKey: 'relic_stealth_module',
     effects: {
-      traceReductionPerTurn: 1
+      traceReductionPerTurn: 2,
+      requiresDamageTaken: true
     },
-    triggers: ['onTurnStart']
+    triggers: ['onTurnEnd']
   },
 
-  relic_cpu_optimizer: {
-    id: 'relic_cpu_optimizer',
-    name: 'CPU Optimizer',
-    description: 'Start each combat with +1 max CPU.',
+  relic_execution_cache: {
+    id: 'relic_execution_cache',
+    name: 'Execution Cache',
+    description: 'The first card you play each combat costs 1 less CPU (minimum 0).',
     tier: 'base',
-    spriteKey: 'relic_cpu_optimizer',
+    spriteKey: 'relic_execution_cache',
     effects: {
-      bonusStartingCPU: 1
+      firstCardCostReduction: 1,
+      oncePerCombat: true
     },
-    triggers: ['onCombatStart']
+    triggers: ['onCardPlay']
   },
 
   relic_trace_buffer: {
@@ -42,11 +44,12 @@ export const RELIC_LIBRARY = {
   relic_exploit_amplifier: {
     id: 'relic_exploit_amplifier',
     name: 'Exploit Amplifier',
-    description: 'Deal +1 damage with all attacks.',
+    description: 'Deal +2 damage with all attacks. Gain +1 Trace per attack.',
     tier: 'base',
     spriteKey: 'relic_exploit_amplifier',
     effects: {
-      damageBonus: 1
+      damageBonus: 2,
+      traceIncreasePerAttack: 1
     },
     triggers: ['onDamageDealt']
   },
@@ -54,11 +57,11 @@ export const RELIC_LIBRARY = {
   relic_defense_matrix: {
     id: 'relic_defense_matrix',
     name: 'Defense Matrix',
-    description: 'Gain +2 Block with all Defense cards.',
+    description: 'Gain +1 Block with all Defense cards.',
     tier: 'base',
     spriteKey: 'relic_defense_matrix',
     effects: {
-      blockBonus: 2
+      blockBonus: 1
     },
     triggers: ['onBlockGained']
   },
@@ -78,25 +81,27 @@ export const RELIC_LIBRARY = {
   relic_overclocking_chip: {
     id: 'relic_overclocking_chip',
     name: 'Overclocking Chip',
-    description: 'Gain +1 max CPU permanently.',
-    tier: 'advanced',
+    description: 'Gain +1 max CPU permanently. Increase Trace by 5 each turn.',
+    tier: 'elite',
     spriteKey: 'relic_overclocking_chip',
     effects: {
-      bonusStartingCPU: 1
+      bonusStartingCPU: 1,
+      traceIncreasePerTurn: 5
     },
-    triggers: ['onCombatStart']
+    triggers: ['onCombatStart', 'onTurnEnd']
   },
 
   relic_neural_link: {
     id: 'relic_neural_link',
     name: 'Neural Link',
-    description: 'Draw 1 extra card at start of each turn.',
+    description: 'Draw 1 extra card at start of turn. Discard 1 random card at end of turn.',
     tier: 'advanced',
     spriteKey: 'relic_neural_link',
     effects: {
-      bonusCardsPerTurn: 1
+      bonusCardsPerTurn: 1,
+      randomDiscardPerTurn: 1
     },
-    triggers: ['onTurnStart']
+    triggers: ['onTurnStart', 'onTurnEnd']
   },
 
   relic_quantum_cache: {

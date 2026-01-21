@@ -29,6 +29,7 @@ import Runner from '../entities/Runner.js';
 import ICE from '../entities/ICE.js';
 import audioManager from '../utils/AudioManager.js';
 import relicSystem from '../systems/RelicSystem.js';
+import progressionSystem from '../systems/ProgressionSystem.js';
 import { 
   animateDamageNumber, 
   animateShake, 
@@ -652,15 +653,15 @@ export default class BattleScene extends Phaser.Scene {
       const totalRows = nodeData.totalRows || 6;
       const nodeProgress = nodeData.nodeRow / (totalRows - 1);
       
-      // Progressive scaling: +0% at row 0, up to +20% at final row before boss
-      const progressMultiplier = 1.0 + (nodeProgress * 0.20);
+      // Progressive scaling: +0% at row 0, up to +35% at final row before boss
+      const progressMultiplier = 1.0 + (nodeProgress * 0.35);
       
       // Act multiplier from config
       const actMultipliers = GAME_CONFIG.DIFFICULTY.ACT_DIFFICULTY_MULTIPLIER;
       const actMultiplier = actMultipliers[actNumber - 1] || 1.0;
       
       // Elite bonus (if applicable)
-      const eliteMultiplier = nodeData.isElite ? 1.15 : 1.0;
+      const eliteMultiplier = nodeData.isElite ? 1.25 : 1.0;
       
       // Combined multiplier
       const totalMultiplier = progressMultiplier * actMultiplier * eliteMultiplier;
@@ -2278,8 +2279,20 @@ createPersistentShield(x, y, isPlayer) {
 
       console.log('[BattleScene] handleVictory: Formatted rewards:', formattedRewards);
 
-      this.time.delayedCall(GAME_CONFIG.ANIMATION.VICTORY_SCREEN_DELAY, () => {
+      this.time.delayedCall(GAME_CONFIG.ANIMATION.VICTORY_SCREEN_DELAY, async () => {
         const combatStats = combatSystem.getCombatStats();
+
+        // CRITICAL FIX: Award achievement BEFORE transitioning to RewardScene
+        if (this.isBossCombat && this.enemy.id === 'ice_firewall_boss') {
+          console.log('[BattleScene] handleVictory: Boss defeated! Awarding achievement...');
+          const runData = {
+            bossDefeated: this.enemy.id,
+            actNumber: this.actNumber,
+            defeatedBosses: [this.enemy.id]
+          };
+          await progressionSystem.checkAchievements(runData);
+          console.log('[BattleScene] handleVictory: ✅ Achievement check complete');
+        }
 
         console.log('[BattleScene] handleVictory: Transitioning to RewardScene', {
           nodeId: this.nodeId

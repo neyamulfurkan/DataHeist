@@ -173,6 +173,10 @@ class RelicSystem {
             }
           }
         }
+        if (effects.traceIncreasePerTurn > 0) {
+          player.modifyTrace(effects.traceIncreasePerTurn, 'relic:overclocking_chip');
+          console.log('[RelicSystem] Applied traceIncreasePerTurn:', effects.traceIncreasePerTurn);
+        }
         break;
 
       case 'onCardPlay':
@@ -191,6 +195,7 @@ class RelicSystem {
       bonusStartingCPU: 0,
       maxTraceIncrease: 0,
       traceReductionPerTurn: 0,
+      traceIncreasePerTurn: 0,
       damageBonus: 0,
       blockBonus: 0,
       creditsPerCombat: 0,
@@ -198,6 +203,7 @@ class RelicSystem {
       retainRandomCards: 0,
       startingBlock: 0,
       firstCardFree: false,
+      firstCardCostReduction: 0,
       upgradeRandomCard: 0,
       traceHealPerCombat: 0,
       duplicateFirstCard: false,

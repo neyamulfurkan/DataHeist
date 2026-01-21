@@ -260,11 +260,11 @@ export const CARD_LIBRARY = {
     cost: 2,
     rarity: "common",
     effects: [
-      { type: "block", target: "self", value: 10 },
-      { type: "traceReduction", target: "self", value: 3 }
+      { type: "block", target: "self", value: 8 },
+      { type: "traceReduction", target: "self", value: 2 }
     ],
-    description: "Gain 10 Block. Reduce Trace by 3.",
-    upgradeEffect: { value: 5 },
+    description: "Gain 8 Block. Reduce Trace by 2.",
+    upgradeEffect: { value: 4 },
     spriteKey: "card_defense_003",
     keywords: [],
     isExhaust: false,

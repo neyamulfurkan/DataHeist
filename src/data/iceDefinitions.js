@@ -33,11 +33,11 @@ export const ICE_LIBRARY = {
     name: "Guardian ICE",
     type: "firewall",
     tier: 1,
-    maxHP: 40,
+    maxHP: 42,
     intentPool: [
-      { type: "attack", value: 12, weight: 50 },
-      { type: "defend", value: 6, weight: 20 },
-      { type: "trace", value: 8, weight: 30 }
+      { type: "attack", value: 10, weight: 60 },
+      { type: "defend", value: 8, weight: 20 },
+      { type: "trace", value: 6, weight: 20 }
     ],
     aiLogic: function(gameState) {
       if (!gameState || !gameState.player) {
@@ -217,11 +217,11 @@ export const ICE_LIBRARY = {
     name: "Adaptive ICE",
     type: "adaptive",
     tier: 2,
-    maxHP: 60,
+    maxHP: 65,
     intentPool: [
-      { type: "attack", value: 12, weight: 50 },
-      { type: "defend", value: 10, weight: 30 },
-      { type: "applyStatus", status: "weak", stacks: 1, weight: 20 }
+      { type: "attack", value: 15, weight: 50 },
+      { type: "defend", value: 12, weight: 25 },
+      { type: "applyStatus", status: "weak", stacks: 2, weight: 25 }
     ],
     aiLogic: function(gameState) {
       if (!gameState || !gameState.cardsPlayedThisTurn) {
@@ -530,12 +530,12 @@ export const ICE_LIBRARY = {
     name: "Mega-Firewall",
     type: "boss",
     tier: 3,
-    maxHP: 150,
+    maxHP: 180,
     phases: [
       {
-        hpThreshold: 100,
+        hpThreshold: 120,
         intentPool: [
-          { type: "attack", value: 15, weight: 70 },
+          { type: "attack", value: 18, weight: 70 },
           { type: "defend", value: 15, weight: 30 }
         ]
       },
