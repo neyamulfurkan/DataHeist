@@ -517,6 +517,27 @@ export default class BattleScene extends Phaser.Scene {
       this.hudElements.updateCPU(this.runner.currentCPU, this.runner.maxCPU);
       this.hudElements.updateTurn(1, 'playerTurn');
       this.hudElements.updateEnemyHP(this.enemy.currentHP, this.enemy.maxHP, this.enemy.name);
+      
+      // CRITICAL: Update enemy intent NOW (after HUD exists)
+      this.hudElements.updateEnemyIntent(this.enemy.currentIntent);
+      
+      // Show combat log messages (moved from initializeCombat)
+      if (this.runner.relics && this.runner.relics.length > 0) {
+        const effects = relicSystem.getAggregatedEffects();
+        
+        if (effects.bonusStartingCPU > 0) {
+          this.showCombatLog(`Relic: +${effects.bonusStartingCPU} Max CPU!`);
+        }
+        if (effects.maxTraceIncrease > 0) {
+          this.showCombatLog(`Relic: +${effects.maxTraceIncrease} Max Trace!`);
+        }
+        if (effects.startingBlock > 0) {
+          this.showCombatLog(`Relic: Start with ${effects.startingBlock} Block!`);
+        }
+      }
+      
+      this.showCombatLog(`Combat Start: ${this.runner.name} vs ${this.enemy.name}`);
+      this.showCombatLog(`Enemy Intent: ${this.enemy.getIntentDescription()}`);
 
       console.log('[BattleScene] initializeUI: UI initialization complete');
 
@@ -608,14 +629,16 @@ export default class BattleScene extends Phaser.Scene {
         }
       }
 
-      // CRITICAL FIX: Update intent display immediately
-      this.hudElements.updateEnemyIntent(this.enemy.currentIntent);
+      // Don't update HUD here - it doesn't exist yet!
+      // HUD will be updated in initializeUI() after it's created
       
       this.combatStartTurn = this.gameState.turn;
       
-      // Log the FIRST turn intent clearly
-      this.showCombatLog(`Combat Start: ${this.runner.name} vs ${this.enemy.name}`);
-      this.showCombatLog(`Enemy Intent: ${this.enemy.getIntentDescription()}`);
+      console.log('[BattleScene] initializeCombat: ✅ Combat initialized', {
+        playerCPU: this.gameState.player.currentCPU,
+        playerMaxCPU: this.gameState.player.maxCPU,
+        enemyIntent: this.enemy.getIntentDescription()
+      });
 
     } catch (error) {
       console.error('[BattleScene] initializeCombat: Failed to initialize combat', {
