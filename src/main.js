@@ -30,7 +30,7 @@ if (!Phaser) {
   throw new Error('Phaser not loaded! Check index.html script tag.');
 }
 
-import { GAME_CONFIG } from './config.js';
+import { GAME_CONFIG } from '../config.js';
 
 console.log('[main.js] Phaser library loaded:', Phaser.VERSION);
 console.log('[main.js] Game configuration loaded');

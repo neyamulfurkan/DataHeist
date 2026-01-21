@@ -741,7 +741,7 @@ export default class Runner {
     }
     
     this.relics.push(relic);
-    console.log('[Runner] addRelic: Relic added:', relic.name);
+    console.log('[Runner] addRelic: Relic added:', relic.name || relic.id);
     
     return true;
   }
@@ -753,42 +753,6 @@ export default class Runner {
    */
   hasRelic(relicId) {
     return this.relics.some(r => r.id === relicId);
-  }
-  
-  /**
-   * Get cumulative effects from all relics
-   * @returns {Object} Effect values from all relics
-   */
-  getRelicEffects() {
-    const effects = {
-      traceReductionPerTurn: 0,
-      bonusStartingCPU: 0,
-      maxTraceIncrease: 0,
-      damageBonus: 0,
-      blockBonus: 0
-    };
-    
-    this.relics.forEach(relic => {
-      switch(relic.id) {
-        case 'relic_stealth_module':
-          effects.traceReductionPerTurn += 1;
-          break;
-        case 'relic_cpu_optimizer':
-          effects.bonusStartingCPU += 1;
-          break;
-        case 'relic_trace_buffer':
-          effects.maxTraceIncrease += 20;
-          break;
-        case 'relic_exploit_amplifier':
-          effects.damageBonus += 1;
-          break;
-        case 'relic_defense_matrix':
-          effects.blockBonus += 2;
-          break;
-      }
-    });
-    
-    return effects;
   }
 
   /**
