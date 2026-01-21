@@ -57,6 +57,9 @@ class RelicSystem {
       if (relic.hasTrigger(triggerType)) {
         const effects = relic.trigger(triggerType, context);
         if (effects) {
+          // CRITICAL FIX: Actually APPLY the effects instead of just storing them
+          this._applyRelicEffects(effects, triggerType, context);
+          
           triggeredEffects.push({
             relicId: relic.id,
             relicName: relic.name,
@@ -77,6 +80,110 @@ class RelicSystem {
     }
 
     return triggeredEffects;
+  }
+
+  /**
+   * Apply relic effects to game state
+   * @param {Object} effects - Effects object from relic
+   * @param {string} triggerType - When this triggered
+   * @param {Object} context - Game state context
+   * @private
+   */
+  _applyRelicEffects(effects, triggerType, context) {
+    if (!effects || !context.gameState) {
+      return;
+    }
+
+    const gameState = context.gameState;
+    const player = gameState.player;
+    const enemy = gameState.enemy;
+
+    // Apply effects based on trigger type
+    switch (triggerType) {
+      case 'onCombatStart':
+        if (effects.bonusStartingCPU > 0) {
+          player.maxCPU += effects.bonusStartingCPU;
+          player.currentCPU = player.maxCPU;
+          console.log('[RelicSystem] Applied bonusStartingCPU:', effects.bonusStartingCPU);
+        }
+        if (effects.maxTraceIncrease > 0) {
+          player.maxTrace += effects.maxTraceIncrease;
+          console.log('[RelicSystem] Applied maxTraceIncrease:', effects.maxTraceIncrease);
+        }
+        if (effects.startingBlock > 0) {
+          player.gainBlock(effects.startingBlock, 'relic:ghost_protocol');
+          console.log('[RelicSystem] Applied startingBlock:', effects.startingBlock);
+        }
+        if (effects.upgradeRandomCard > 0) {
+          const deck = player.deck.getAllCards();
+          const upgradeableCards = deck.filter(c => c.upgradeLevel < 1);
+          if (upgradeableCards.length > 0) {
+            const randomIndex = Math.floor(Math.random() * upgradeableCards.length);
+            upgradeableCards[randomIndex].upgrade();
+            console.log('[RelicSystem] Applied upgradeRandomCard');
+          }
+        }
+        break;
+
+      case 'onTurnStart':
+        if (effects.traceReductionPerTurn > 0) {
+          player.modifyTrace(-effects.traceReductionPerTurn, 'relic:stealth_module');
+          console.log('[RelicSystem] Applied traceReductionPerTurn:', effects.traceReductionPerTurn);
+        }
+        if (effects.bonusCardsPerTurn > 0) {
+          const bonusCards = player.deck.draw(effects.bonusCardsPerTurn);
+          console.log('[RelicSystem] Applied bonusCardsPerTurn:', bonusCards.length);
+        }
+        break;
+
+      case 'onDamageDealt':
+        if (effects.damageBonus > 0 && context.damage) {
+          context.damage += effects.damageBonus;
+          console.log('[RelicSystem] Applied damageBonus:', effects.damageBonus);
+        }
+        break;
+
+      case 'onBlockGained':
+        if (effects.blockBonus > 0 && context.block) {
+          context.block += effects.blockBonus;
+          console.log('[RelicSystem] Applied blockBonus:', effects.blockBonus);
+        }
+        break;
+
+      case 'onCombatEnd':
+        if (effects.creditsPerCombat > 0 && gameState.runData) {
+          gameState.runData.credits += effects.creditsPerCombat;
+          console.log('[RelicSystem] Applied creditsPerCombat:', effects.creditsPerCombat);
+        }
+        if (effects.traceHealPerCombat > 0) {
+          player.modifyTrace(-effects.traceHealPerCombat, 'relic:trace_eraser');
+          console.log('[RelicSystem] Applied traceHealPerCombat:', effects.traceHealPerCombat);
+        }
+        break;
+
+      case 'onTurnEnd':
+        if (effects.retainRandomCards > 0 && player.deck.hand.length > 0) {
+          const hand = player.deck.hand;
+          for (let i = 0; i < Math.min(effects.retainRandomCards, hand.length); i++) {
+            const randomIndex = Math.floor(Math.random() * hand.length);
+            const cardToRetain = hand[randomIndex];
+            if (cardToRetain && !cardToRetain.keywords.includes('retain')) {
+              cardToRetain.keywords.push('retain');
+              console.log('[RelicSystem] Applied retainRandomCards to:', cardToRetain.name);
+            }
+          }
+        }
+        break;
+
+      case 'onCardPlay':
+        // Special effects like firstCardFree, duplicateFirstCard are handled in CombatSystem
+        // because they need specific game logic context
+        break;
+
+      case 'onCardCostCalculation':
+        // Handled in CombatSystem during cost calculation
+        break;
+    }
   }
 
   getAggregatedEffects() {

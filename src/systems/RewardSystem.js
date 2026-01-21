@@ -743,6 +743,68 @@ getRelicPool(actNumber) {
   }
 
   /**
+   * Select 3 random relics for player to choose from
+   * @param {number} actNumber - Current act (1-3)
+   * @param {string[]} ownedRelicIds - Relics player already has (to avoid duplicates)
+   * @returns {Relic[]} Array of 3 Relic instances
+   */
+  selectRelicChoices(actNumber, ownedRelicIds = []) {
+    console.log('[RewardSystem] selectRelicChoices called for act:', actNumber);
+
+    if (typeof actNumber !== 'number' || actNumber < 1 || actNumber > 3) {
+      console.error('[RewardSystem] selectRelicChoices: Invalid actNumber:', actNumber);
+      return [];
+    }
+
+    try {
+      const pool = this.getRelicPool(actNumber);
+
+      if (!pool || pool.length === 0) {
+        console.error('[RewardSystem] selectRelicChoices: Empty relic pool for act', actNumber);
+        return [];
+      }
+
+      // Filter out relics player already owns
+      const availablePool = pool.filter(relicId => !ownedRelicIds.includes(relicId));
+
+      if (availablePool.length === 0) {
+        console.warn('[RewardSystem] selectRelicChoices: Player owns all relics! Using full pool');
+        availablePool.push(...pool);
+      }
+
+      // Select 3 unique relics
+      const selectedRelics = [];
+      const usedIds = new Set();
+
+      const choiceCount = Math.min(3, availablePool.length);
+
+      while (selectedRelics.length < choiceCount) {
+        const randomIndex = Math.floor(Math.random() * availablePool.length);
+        const relicId = availablePool[randomIndex];
+
+        if (!usedIds.has(relicId)) {
+          const relicData = getRelicById(relicId);
+          if (relicData) {
+            const relic = new Relic(relicId);
+            selectedRelics.push(relic);
+            usedIds.add(relicId);
+          }
+        }
+
+        // Safety: prevent infinite loop
+        if (usedIds.size >= availablePool.length) break;
+      }
+
+      console.log('[RewardSystem] selectRelicChoices: Selected', selectedRelics.length, 'relic choices');
+      return selectedRelics;
+
+    } catch (error) {
+      console.error('[RewardSystem] selectRelicChoices: Error selecting relics:', error);
+      return [];
+    }
+  }
+
+  /**
    * Get relic name by ID
    * @param {string} relicId - Relic ID
    * @returns {string} Relic display name

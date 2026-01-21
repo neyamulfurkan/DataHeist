@@ -2225,21 +2225,23 @@ createPersistentShield(x, y, isPlayer) {
 
       console.log('[BattleScene] handleVictory: Card choices generated:', cardChoices.length);
 
-      // CRITICAL FIX: Actually generate relic if boss guarantees it
-      let earnedRelic = null;
-      if (this.enemy.rewards.guaranteedRelic) {
-        earnedRelic = rewardSystem.selectRelic(actNumber);
-        console.log('[BattleScene] handleVictory: Boss relic earned:', earnedRelic?.name);
-      }
+      // CRITICAL FIX: Generate relic CHOICES (not automatic assignment)
+    let relicChoices = [];
+    if (this.enemy.rewards.guaranteedRelic) {
+      const ownedRelicIds = this.runner.relics ? this.runner.relics.map(r => r.id) : [];
+      relicChoices = rewardSystem.selectRelicChoices(actNumber, ownedRelicIds);
+      console.log('[BattleScene] handleVictory: Boss relic choices generated:', relicChoices.length);
+    }
 
-      const formattedRewards = {
-        credits: this.enemy.rewards.credits || 30,
-        cardChoices: cardChoices,
-        encounterType: this.isBossCombat ? 'boss' : (this.isEliteCombat ? 'elite' : 'combat'),
-        bonusRewards: [],
-        relic: earnedRelic,  // FIXED: Use actual relic object
-        bossId: this.isBossCombat ? this.enemy.id : null  // NEW: Pass boss ID
-      };
+    const formattedRewards = {
+      credits: this.enemy.rewards.credits || 30,
+      cardChoices: cardChoices,
+      encounterType: this.isBossCombat ? 'boss' : (this.isEliteCombat ? 'elite' : 'combat'),
+      bonusRewards: [],
+      relic: null,  // No automatic relic
+      relicChoices: relicChoices,  // NEW: Player chooses 1 of 3
+      bossId: this.isBossCombat ? this.enemy.id : null
+    };
 
       console.log('[BattleScene] handleVictory: Formatted rewards:', formattedRewards);
 

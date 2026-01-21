@@ -453,6 +453,10 @@ class SaveSystem {
       throw new Error('Run data must contain valid Runner instance');
     }
 
+    // CRITICAL FIX: Extract relics from runner.relics (where they're actually stored)
+    const relicsToSave = runData.runner.relics || runData.relics || [];
+    console.log('[SaveSystem] _serializeRunData: Serializing relics:', relicsToSave.length);
+
     const serialized = {
       runId: runData.runId || this._generateRunId(),
       runner: typeof runData.runner.toJSON === 'function' ? runData.runner.toJSON() : runData.runner,
@@ -465,13 +469,13 @@ class SaveSystem {
         clearedNodes: runData.map.clearedNodes || []
       } : null,
       credits: runData.credits || 0,
-      relics: runData.relics || [],
+      relics: relicsToSave.map(r => r.toJSON ? r.toJSON() : r), // Serialize relic objects
       actNumber: runData.actNumber || 1,
       totalTurns: runData.totalTurns || 0,
       combatsWon: runData.combatsWon || 0
     };
 
-    console.log('[SaveSystem] _serializeRunData: Serialization complete');
+    console.log('[SaveSystem] _serializeRunData: ✅ Serialization complete, relics saved:', serialized.relics.length);
     return serialized;
   }
 
@@ -490,13 +494,25 @@ class SaveSystem {
       const deck = saveData.deck ? Deck.fromJSON(saveData.deck) : null;
       console.log('[SaveSystem] _deserializeRunData: Deck deserialized:', deck ? deck.getAllCards().length + ' cards' : 'null');
 
+      // CRITICAL FIX: Deserialize relics and attach to runner
+      const Relic = require('../entities/Relic.js').default;
+      const deserializedRelics = (saveData.relics || []).map(relicData => {
+        if (relicData && typeof relicData === 'object') {
+          return Relic.fromJSON(relicData);
+        }
+        return null;
+      }).filter(r => r !== null);
+      
+      runner.relics = deserializedRelics;
+      console.log('[SaveSystem] _deserializeRunData: ✅ Relics deserialized and attached to runner:', runner.relics.length);
+
       const deserialized = {
         runId: saveData.runId,
         runner: runner,
         deck: deck,
         map: saveData.map,
         credits: saveData.credits,
-        relics: saveData.relics,
+        relics: deserializedRelics, // Keep for backwards compatibility
         actNumber: saveData.actNumber,
         totalTurns: saveData.totalTurns,
         combatsWon: saveData.combatsWon

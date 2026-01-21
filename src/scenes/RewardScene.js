@@ -33,8 +33,11 @@ export default class RewardScene extends Phaser.Scene {
 
     this.rewards = null;
     this.cardChoices = [];
-    this.selectedCard = null;
+        this.selectedCard = null;
     this.selectedCardContainer = null;
+    this.selectedRelic = null;
+    this.selectedRelicContainer = null;
+    this.relicContainers = [];
     this.runner = null;
     this.mapState = null;
     this.cardUI = null;
@@ -87,8 +90,11 @@ export default class RewardScene extends Phaser.Scene {
     this.runner = data.runner;
     this.mapState = data.mapState;
     this.nodeId = data.nodeId;  // CRITICAL: Store the completed node ID
-    this.selectedCard = null;
+        this.selectedCard = null;
     this.selectedCardContainer = null;
+    this.selectedRelic = null;
+    this.selectedRelicContainer = null;
+    this.relicContainers = [];
     this.isTransitioning = false;
 
     console.log('[RewardScene] init: Initialization complete', {
@@ -127,6 +133,7 @@ export default class RewardScene extends Phaser.Scene {
       }
 
       this.displayRewardsSummary();
+      this.displayRelicChoices(); // NEW: Display relic choices
       this.displayCardChoices();
       this.createButtons();
 
@@ -221,42 +228,7 @@ export default class RewardScene extends Phaser.Scene {
         });
       });
     }
-
-   if (this.rewards.relic) {
-        const relicName = this.rewards.relic.name || this.rewards.relic.id || 'Unknown Relic';
-        const relicDescription = this.rewards.relic.description || 'No description';
-        const relicY = creditsY + 100;
-        
-        const relicText = this.add.text(centerX, relicY, `RELIC EARNED: ${relicName}`, {
-          fontFamily: GAME_CONFIG.UI.TEXT.FONT_FAMILY,
-          fontSize: '24px',
-          color: GAME_CONFIG.UI.COLORS.MAGENTA_PRIMARY,
-          fontStyle: 'bold'
-        });
-        relicText.setOrigin(0.5);
-        
-        const relicDescText = this.add.text(centerX, relicY + 35, relicDescription, {
-          fontFamily: GAME_CONFIG.UI.TEXT.FONT_FAMILY,
-          fontSize: '18px',
-          color: GAME_CONFIG.UI.COLORS.TEXT_SECONDARY,
-          align: 'center',
-          wordWrap: { width: 600 }
-        });
-        relicDescText.setOrigin(0.5);
-
-        console.log('[RewardScene] displayRewardsSummary: Relic displayed:', relicName);
-        
-        // CRITICAL FIX: Add relic to runner
-        if (this.runner) {
-          if (!this.runner.relics) {
-            this.runner.relics = [];
-          }
-          this.runner.relics.push(this.rewards.relic);
-          console.log('[RewardScene] displayRewardsSummary: Relic added to runner, total relics:', this.runner.relics.length);
-        } else {
-          console.error('[RewardScene] displayRewardsSummary: No runner to add relic to!');
-        }
-      }
+// REMOVE AUTOMATIC RELIC DISPLAY - Will be handled in displayRelicChoices()
 
     console.log('[RewardScene] displayRewardsSummary: Summary displayed successfully');
   }
@@ -390,6 +362,230 @@ displayCardChoices() {
     });
 
     console.log('[RewardScene] displayCardChoices: All cards displayed successfully');
+  }
+
+  displayRelicChoices() {
+    console.log('[RewardScene] displayRelicChoices: Displaying relic choices');
+
+    if (!this.rewards || !this.rewards.relicChoices || this.rewards.relicChoices.length === 0) {
+      console.log('[RewardScene] displayRelicChoices: No relic choices available');
+      return;
+    }
+
+    const relicCount = this.rewards.relicChoices.length;
+    const relicSpacing = 250;
+    const centerX = GAME_CONFIG.PHASER.WIDTH / 2;
+    const centerY = 180;
+
+    const totalWidth = (relicCount - 1) * relicSpacing;
+    const startX = centerX - totalWidth / 2;
+
+    const instructionText = this.add.text(centerX, centerY - 60, 'SELECT A RELIC', {
+      fontFamily: GAME_CONFIG.UI.TEXT.FONT_FAMILY,
+      fontSize: '26px',
+      color: GAME_CONFIG.UI.COLORS.MAGENTA_PRIMARY,
+      fontStyle: 'bold',
+      stroke: '#000000',
+      strokeThickness: 4
+    });
+    instructionText.setOrigin(0.5);
+
+    this.relicContainers = [];
+
+    this.rewards.relicChoices.forEach((relic, index) => {
+      try {
+        const relicX = startX + (index * relicSpacing);
+        const relicY = centerY;
+
+        const container = this.add.container(relicX, relicY);
+
+        // Background
+        const bg = this.add.rectangle(0, 0, 220, 140, 0x1a1a2e, 0.9);
+        bg.setStrokeStyle(3, 0xff00ff);
+        container.add(bg);
+
+        // Relic Icon (placeholder - use sprite if available)
+        const icon = this.add.text(0, -30, '🔮', {
+          fontSize: '48px'
+        });
+        icon.setOrigin(0.5);
+        container.add(icon);
+
+        // Relic Name
+        const name = this.add.text(0, 20, relic.name, {
+          fontFamily: GAME_CONFIG.UI.TEXT.FONT_FAMILY,
+          fontSize: '18px',
+          color: '#ffffff',
+          fontStyle: 'bold',
+          align: 'center',
+          wordWrap: { width: 200 }
+        });
+        name.setOrigin(0.5);
+        container.add(name);
+
+        // Relic Description
+        const desc = this.add.text(0, 55, relic.description, {
+          fontFamily: GAME_CONFIG.UI.TEXT.FONT_FAMILY,
+          fontSize: '14px',
+          color: '#cccccc',
+          align: 'center',
+          wordWrap: { width: 200 }
+        });
+        desc.setOrigin(0.5);
+        container.add(desc);
+
+        container.setData('relic', relic);
+        container.setData('originalY', relicY);
+        container.setSize(220, 140);
+        container.setInteractive({ useHandCursor: true });
+
+        container.on('pointerover', () => {
+          if (!this.isTransitioning && !this.selectedRelic) {
+            this.tweens.add({
+              targets: container,
+              scaleX: 1.1,
+              scaleY: 1.1,
+              y: relicY - 10,
+              duration: 200,
+              ease: 'Power2'
+            });
+            audioManager.playSound('sfx_hover', 0.6);
+          }
+        });
+
+        container.on('pointerout', () => {
+          if (!this.isTransitioning && !this.selectedRelic) {
+            this.tweens.add({
+              targets: container,
+              scaleX: 1,
+              scaleY: 1,
+              y: relicY,
+              duration: 200,
+              ease: 'Power2'
+            });
+          }
+        });
+
+        container.on('pointerdown', () => {
+          if (!this.isTransitioning) {
+            this.onRelicClick(relic, container);
+          }
+        });
+
+        this.relicContainers.push(container);
+
+        this.tweens.add({
+          targets: container,
+          alpha: { from: 0, to: 1 },
+          y: { from: relicY - 50, to: relicY },
+          duration: 400,
+          delay: index * 100,
+          ease: 'Back.easeOut'
+        });
+
+        console.log('[RewardScene] displayRelicChoices: Relic created:', relic.name);
+
+      } catch (error) {
+        console.error('[RewardScene] displayRelicChoices: Error creating relic:', error);
+      }
+    });
+
+    console.log('[RewardScene] displayRelicChoices: All relics displayed');
+  }
+
+  onRelicClick(relic, container) {
+    console.log('[RewardScene] onRelicClick: Relic selected:', relic.name);
+
+    if (!relic) {
+      console.error('[RewardScene] onRelicClick: Invalid relic');
+      return;
+    }
+
+    if (!container) {
+      console.error('[RewardScene] onRelicClick: Invalid container');
+      return;
+    }
+
+    if (this.selectedRelic === relic) {
+      console.log('[RewardScene] onRelicClick: Relic already selected, deselecting');
+      this.deselectRelic();
+      return;
+    }
+
+    if (this.selectedRelic) {
+      this.deselectRelic();
+    }
+
+    this.selectedRelic = relic;
+    this.selectedRelicContainer = container;
+
+    // Highlight selected relic
+    const bg = container.list[0];
+    if (bg) {
+      bg.setStrokeStyle(4, 0x00ff88);
+      this.tweens.add({
+        targets: bg,
+        alpha: 1,
+        duration: 200
+      });
+    }
+
+    // Fade other relics
+    this.relicContainers.forEach(c => {
+      if (c !== container) {
+        this.tweens.add({
+          targets: c,
+          alpha: 0.4,
+          scaleX: 0.9,
+          scaleY: 0.9,
+          duration: 300,
+          ease: 'Power2'
+        });
+      }
+    });
+
+    // Enable confirm button (if card also selected)
+    if (this.selectedCard) {
+      this.confirmButton.setAlpha(1);
+      this.confirmButton.setInteractive();
+    }
+
+    audioManager.playSound('sfx_card_play', 0.8);
+
+    console.log('[RewardScene] onRelicClick: Relic selection complete');
+  }
+
+  deselectRelic() {
+    console.log('[RewardScene] deselectRelic: Deselecting relic:', this.selectedRelic?.name);
+
+    if (!this.selectedRelic || !this.selectedRelicContainer) {
+      return;
+    }
+
+    // Reset border
+    const bg = this.selectedRelicContainer.list[0];
+    if (bg) {
+      bg.setStrokeStyle(3, 0xff00ff);
+    }
+
+    // Restore all relics
+    this.relicContainers.forEach(container => {
+      const originalY = container.getData('originalY');
+      this.tweens.add({
+        targets: container,
+        alpha: 1,
+        scaleX: 1,
+        scaleY: 1,
+        y: originalY,
+        duration: 300,
+        ease: 'Power2'
+      });
+    });
+
+    this.selectedRelic = null;
+    this.selectedRelicContainer = null;
+
+    console.log('[RewardScene] deselectRelic: Deselection complete');
   }
 
   createButtons() {
@@ -568,8 +764,11 @@ displayCardChoices() {
       });
     });
 
-    this.selectedCard = null;
+        this.selectedCard = null;
     this.selectedCardContainer = null;
+    this.selectedRelic = null;
+    this.selectedRelicContainer = null;
+    this.relicContainers = [];
 
     this.confirmButton.setAlpha(0.5);
     this.confirmButton.disableInteractive();
@@ -616,64 +815,63 @@ displayCardChoices() {
       return;
     }
 
+    // CRITICAL FIX: Require BOTH card AND relic selection (if relics available)
+    const requiresRelic = this.rewards.relicChoices && this.rewards.relicChoices.length > 0;
+    
     if (!this.selectedCard) {
       console.error('[RewardScene] onConfirmClick: No card selected');
+      this.showErrorMessage('SELECT A CARD FIRST');
+      return;
+    }
+
+    if (requiresRelic && !this.selectedRelic) {
+      console.error('[RewardScene] onConfirmClick: No relic selected');
+      this.showErrorMessage('SELECT A RELIC FIRST');
       return;
     }
     
     this.isTransitioning = true;
 
     try {
-      // CRITICAL FIX: Clone the card to create a new instance with unique ID
+      // Add card to deck
       const cardToAdd = this.selectedCard.clone ? this.selectedCard.clone() : this.selectedCard;
-      
       const success = this.runner.deck.addCard(cardToAdd, 'discard');
 
       if (!success) {
-        console.error('[RewardScene] onConfirmClick: Failed to add card to deck:', {
-          cardName: this.selectedCard.name,
-          cardId: this.selectedCard.id,
-          deckSize: this.runner.deck.getAllCards().length
-        });
         throw new Error('Failed to add card to deck');
       }
 
-      console.log('[RewardScene] onConfirmClick: Card added to deck successfully:', {
-        cardName: this.selectedCard.name,
-        newDeckSize: this.runner.deck.getAllCards().length,
-        discardPileSize: this.runner.deck.discardPile.length
-      });
+      console.log('[RewardScene] onConfirmClick: Card added:', this.selectedCard.name);
+
+      // Add relic to runner
+      if (this.selectedRelic) {
+        if (!this.runner.relics) {
+          this.runner.relics = [];
+        }
+
+        const relicExists = this.runner.relics.some(r => r.id === this.selectedRelic.id);
+        if (!relicExists) {
+          this.runner.relics.push(this.selectedRelic);
+          console.log('[RewardScene] onConfirmClick: ✅ Relic added:', this.selectedRelic.name);
+        } else {
+          console.warn('[RewardScene] onConfirmClick: Relic already owned');
+        }
+      }
 
       audioManager.playSound('sfx_card_draw', 1.0);
 
-      this.showConfirmationMessage(`${this.selectedCard.name.toUpperCase()} ADDED TO DECK!`, () => {
+      const message = this.selectedRelic ? 
+        `${this.selectedCard.name.toUpperCase()} & ${this.selectedRelic.name.toUpperCase()} ADDED!` :
+        `${this.selectedCard.name.toUpperCase()} ADDED TO DECK!`;
+
+      this.showConfirmationMessage(message, () => {
         this.returnToMap();
       });
 
     } catch (error) {
-      console.error('[RewardScene] onConfirmClick: Error adding card:', {
-        error: error.message,
-        stack: error.stack,
-        cardName: this.selectedCard?.name,
-        cardId: this.selectedCard?.id
-      });
-
+      console.error('[RewardScene] onConfirmClick: Error:', error);
       this.isTransitioning = false;
-      
-      this.confirmButton.setAlpha(1);
-      this.confirmButton.setInteractive();
-      
-      const background = this.confirmButton.list[0];
-      if (background) {
-        this.tweens.add({
-          targets: background,
-          alpha: 1,
-          duration: 300,
-          ease: 'Power2'
-        });
-      }
-      
-      this.showErrorMessage('FAILED TO ADD CARD - TRY AGAIN');
+      this.showErrorMessage('FAILED - TRY AGAIN');
     }
   }
 

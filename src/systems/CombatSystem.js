@@ -185,38 +185,20 @@ class CombatSystem {
       return;
     }
     
-    relicSystem.setRelics(this.gameState.player.relics || []);
-    
-    const triggeredRelics = relicSystem.trigger('onCombatStart', { gameState: this.gameState });
-    
-    const relicEffects = relicSystem.getAggregatedEffects();
-    
-    if (relicEffects.bonusStartingCPU > 0) {
-      this.gameState.player.maxCPU += relicEffects.bonusStartingCPU;
-      this.gameState.player.currentCPU = this.gameState.player.maxCPU;
-      console.log('[CombatSystem] applyRelicEffects: CPU bonus - max CPU increased to', this.gameState.player.maxCPU);
+    // CRITICAL FIX: Ensure relics array exists before setting
+    if (!this.gameState.player.relics) {
+      this.gameState.player.relics = [];
+      console.warn('[CombatSystem] applyRelicEffects: No relics on player, initialized empty array');
     }
     
-    if (relicEffects.maxTraceIncrease > 0) {
-      this.gameState.player.maxTrace += relicEffects.maxTraceIncrease;
-      console.log('[CombatSystem] applyRelicEffects: Trace Buffer - max trace increased to', this.gameState.player.maxTrace);
-    }
+    console.log('[CombatSystem] applyRelicEffects: Setting relics:', this.gameState.player.relics.length);
+    relicSystem.setRelics(this.gameState.player.relics);
     
-    if (relicEffects.startingBlock > 0) {
-      this.gainBlock(relicEffects.startingBlock, this.gameState.player, 'relic:ghost_protocol');
-      console.log('[CombatSystem] applyRelicEffects: Ghost Protocol - gained', relicEffects.startingBlock, 'starting block');
-    }
+    // FIXED: trigger() now applies effects automatically
+    relicSystem.trigger('onCombatStart', { gameState: this.gameState });
     
-    if (relicEffects.upgradeRandomCard > 0) {
-      const deck = this.gameState.player.deck.getAllCards();
-const upgradeableCards = deck.filter(c => c.upgradeLevel < GAME_CONFIG.CARDS.MAX_UPGRADE_LEVEL);  if (upgradeableCards.length > 0) {
-    const randomIndex = Math.floor(Math.random() * upgradeableCards.length);
-    const cardToUpgrade = upgradeableCards[randomIndex];
-    cardToUpgrade.upgrade();
-    console.log('[CombatSystem] applyRelicEffects: AI Companion - upgraded', cardToUpgrade.name);
+    console.log('[CombatSystem] applyRelicEffects: ✅ Relic effects applied via RelicSystem');
   }
-}console.log('[CombatSystem] applyRelicEffects: Relic effects applied:', relicEffects);
-}
 
   startTurn() {
     if (!this.gameState) {
@@ -311,18 +293,6 @@ const upgradeableCards = deck.filter(c => c.upgradeLevel < GAME_CONFIG.CARDS.MAX
     // CRITICAL FIX: Ensure relics are set before triggering
     relicSystem.setRelics(player.relics || []);
     relicSystem.trigger('onTurnStart', { gameState: this.gameState });
-    
-    const relicEffects = relicSystem.getAggregatedEffects();
-    
-    if (relicEffects.traceReductionPerTurn > 0) {
-      player.modifyTrace(-relicEffects.traceReductionPerTurn, 'relic:stealth_module');
-      console.log('[CombatSystem] startTurn: Stealth Module reduced trace by', relicEffects.traceReductionPerTurn);
-    }
-    
-    if (relicEffects.bonusCardsPerTurn > 0) {
-      const bonusCards = player.deck.draw(relicEffects.bonusCardsPerTurn);
-      console.log('[CombatSystem] startTurn: Neural Link drew', bonusCards.length, 'bonus cards');
-    }
 
     console.log('[CombatSystem] startTurn: Turn started', {
       turn: this.gameState.turn,
@@ -1607,19 +1577,6 @@ applyStatus(type, stacks, duration, target, sourceDescription = 'unknown') {
     // CRITICAL FIX: Ensure relics are set before triggering
     relicSystem.setRelics(player.relics || []);
     relicSystem.trigger('onTurnEnd', { gameState: this.gameState });
-    
-    const relicEffects = relicSystem.getAggregatedEffects();
-    if (relicEffects.retainRandomCards > 0 && player.deck.hand.length > 0) {
-      const hand = player.deck.hand;
-      for (let i = 0; i < Math.min(relicEffects.retainRandomCards, hand.length); i++) {
-        const randomIndex = Math.floor(Math.random() * hand.length);
-        const cardToRetain = hand[randomIndex];
-        if (cardToRetain && !cardToRetain.keywords.includes('retain')) {
-          cardToRetain.keywords.push('retain');
-          console.log('[CombatSystem] endTurn: Quantum Cache - retained', cardToRetain.name);
-        }
-      }
-    }
 
     this.eventEmitter.emit('turnEnd', {
       turn: this.gameState.turn,
